@@ -1,0 +1,155 @@
+import { NextResponse } from "next/server";
+import { verifyApiRequest } from "@/lib/serverAuth";
+import {
+  getRecords,
+  createRecord,
+  updateRecord,
+} from "@/lib/airtable";
+import {
+  TABLES,
+  NUTRITION_PLAN_FIELDS,
+  NUTRITION_TEMPLATE_FIELDS,
+} from "@/lib/constants";
+import { assertTrainerCanManageTrainee } from "@/lib/trainingSchedule";
+import { invalidateNutritionCache } from "@/lib/cacheService";
+import { extractMealsFromFields, formatFieldsForSave } from "@/lib/nutritionParser";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await verifyApiRequest(request);
+  if (!user || user.role !== "trainer") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { id: traineeId } = await params;
+
+    if (!(await assertTrainerCanManageTrainee(user.recordId, traineeId))) {
+      return NextResponse.json(
+        { message: "This member is not accessible by you" },
+        { status: 403 }
+      );
+    }
+
+    const [plans, templates] = await Promise.all([
+      getRecords(TABLES.NUTRITION_PLANS, { revalidate: 0 }),
+      getRecords(TABLES.NUTRITION_TEMPLATES, { revalidate: 0 }),
+    ]);
+
+    const myPlan = plans.find((p) => {
+      const members = p.fields[NUTRITION_PLAN_FIELDS.MEMBERS] as string[] | undefined;
+      return Array.isArray(members) && members.includes(traineeId);
+    });
+
+    const normalizePlan = (p: { id: string; fields: Record<string, unknown> }) => ({
+      id: p.id,
+      number: (p.fields[NUTRITION_PLAN_FIELDS.NUMBER] as string) || "",
+      calories: Number(p.fields[NUTRITION_PLAN_FIELDS.CALORIES]) || 0,
+      protein: Number(p.fields[NUTRITION_PLAN_FIELDS.PROTEIN]) || 0,
+      carbs: Number(p.fields[NUTRITION_PLAN_FIELDS.CARBS]) || 0,
+      fat: Number(p.fields[NUTRITION_PLAN_FIELDS.FAT]) || 0,
+      goal: (p.fields[NUTRITION_PLAN_FIELDS.GOAL] as string) || "",
+      status: (p.fields[NUTRITION_PLAN_FIELDS.STATUS] as string) || "نشطة",
+      meals: extractMealsFromFields(p.fields),
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        plan: myPlan ? normalizePlan(myPlan) : null,
+        templates: templates.map((t) => ({
+          id: t.id,
+          name: (t.fields[NUTRITION_TEMPLATE_FIELDS.NAME] as string) || "",
+          goal: (t.fields[NUTRITION_TEMPLATE_FIELDS.GOAL] as string) || "",
+          calories: Number(t.fields[NUTRITION_TEMPLATE_FIELDS.CALORIES]) || 0,
+          protein: Number(t.fields[NUTRITION_TEMPLATE_FIELDS.PROTEIN]) || 0,
+          carbs: Number(t.fields[NUTRITION_TEMPLATE_FIELDS.CARBS]) || 0,
+          fat: Number(t.fields[NUTRITION_TEMPLATE_FIELDS.FAT]) || 0,
+          meals: extractMealsFromFields(t.fields),
+        })),
+      },
+    });
+  } catch (error) {
+    console.error("Trainer nutrition fetch error:", error);
+    return NextResponse.json(
+      { message: "Failed to fetch nutrition data" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await verifyApiRequest(request);
+  if (!user || user.role !== "trainer") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { id: traineeId } = await params;
+
+    if (!(await assertTrainerCanManageTrainee(user.recordId, traineeId))) {
+      return NextResponse.json(
+        { message: "This member is not accessible by you" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ message: "Invalid payload" }, { status: 400 });
+    }
+
+    const meals = Array.isArray(body.meals) ? body.meals : [];
+    const mealFields = formatFieldsForSave(meals);
+
+    const fieldsToSave: Record<string, unknown> = {
+      [NUTRITION_PLAN_FIELDS.CALORIES]: Number(body.calories) || 0,
+      [NUTRITION_PLAN_FIELDS.PROTEIN]: Number(body.protein) || 0,
+      [NUTRITION_PLAN_FIELDS.CARBS]: Number(body.carbs) || 0,
+      [NUTRITION_PLAN_FIELDS.FAT]: Number(body.fat) || 0,
+      [NUTRITION_PLAN_FIELDS.GOAL]: String(body.goal || "").trim(),
+      ...mealFields,
+    };
+
+    // Check if member already has a nutrition plan
+    const allPlans = await getRecords(TABLES.NUTRITION_PLANS);
+    const existingPlan = allPlans.find((p) => {
+      const members = p.fields[NUTRITION_PLAN_FIELDS.MEMBERS] as string[] | undefined;
+      return Array.isArray(members) && members.includes(traineeId);
+    });
+
+    let savedRecordId = "";
+    if (existingPlan) {
+      await updateRecord(TABLES.NUTRITION_PLANS, existingPlan.id, fieldsToSave);
+      savedRecordId = existingPlan.id;
+    } else {
+      fieldsToSave[NUTRITION_PLAN_FIELDS.MEMBERS] = [traineeId];
+      const created = await createRecord(TABLES.NUTRITION_PLANS, fieldsToSave);
+      savedRecordId = created.id;
+    }
+
+    // Invalidate member's nutrition cache
+    try {
+      await invalidateNutritionCache(traineeId);
+    } catch {}
+
+    return NextResponse.json({
+      success: true,
+      message: "Nutrition plan saved successfully",
+      data: { id: savedRecordId, ...fieldsToSave, meals },
+    });
+  } catch (error) {
+    console.error("Trainer nutrition save error:", error);
+    return NextResponse.json(
+      { message: "Failed to save nutrition plan" },
+      { status: 500 }
+    );
+  }
+}

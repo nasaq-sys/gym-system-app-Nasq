@@ -1,0 +1,54 @@
+{
+  "id": "/",
+  "name": "Ultra Gym",
+  "short_name": "Ultra Gym",
+  "description": "Ultra Gym member portal and fitness management",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#0e0e0e",
+  "theme_color": "#0e0e0e",
+  "categories": ["health", "fitness", "lifestyle"],
+  "gcm_sender_id": "103953800507",
+  "icons": [
+    {
+      "src": "/assets/ultra-gym-logo.png",
+      "sizes": "2048x2048",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

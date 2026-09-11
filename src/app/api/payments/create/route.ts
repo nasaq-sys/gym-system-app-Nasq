@@ -1,0 +1,259 @@
+import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
+import { getAuthoritativePlan } from "@/lib/membershipPlans";
+import { getActivePaymentProvider } from "@/lib/paymentProvider";
+import { createMockPaymentSession } from "@/lib/mockPaymentService";
+import { createPayTabsPayment } from "@/lib/paytabsService";
+import { createPaymentInvoice } from "@/lib/myfatoorahService";
+import {
+  savePaymentTransaction,
+  acquirePaymentCreationLock,
+  releasePaymentCreationLock,
+} from "@/lib/paymentStore";
+import { incrementPaymentCreated } from "@/lib/paymentMetrics";
+import { getFromRedis } from "@/lib/redisClient";
+import { REDIS_KEYS } from "@/lib/cacheService";
+
+export const dynamic = "force-dynamic";
+
+function getBaseAppUrl(request: Request): string {
+  const envUrl = process.env.APP_PUBLIC_URL || process.env.NEXT_PUBLIC_APP_URL;
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+
+  const origin = request.headers.get("origin");
+  if (origin) return origin;
+
+  const host = request.headers.get("host");
+  const protocol = request.headers.get("x-forwarded-proto") || "https";
+  if (host) return `${protocol}://${host}`;
+
+  return "https://ultra-gym.netlify.app";
+}
+
+/**
+ * POST /api/payments/create
+ *
+ * Provider-agnostic checkout session creation endpoint.
+ * Dispatches to active provider: "mock" (default) | "paytabs" | "myfatoorah".
+ *
+ * SECURITY:
+ *  - Authenticated session strictly required.
+ *  - Server strictly looks up authoritative plan price from membershipPlans.ts (client amount ignored).
+ *  - Anti-double-click lock prevents duplicate session creations.
+ */
+export async function POST(request: Request) {
+  // 1. Zero-Trust Authentication
+  const session = await getSession();
+  if (!session || !session.recordId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = (await request.json().catch(() => ({}))) as {
+      planId?: string;
+    };
+
+    const planId = body.planId;
+    if (!planId) {
+      return NextResponse.json({ message: "planId is required" }, { status: 400 });
+    }
+
+    // 2. Validate authoritative plan
+    let plan;
+    try {
+      plan = await getAuthoritativePlan(planId);
+    } catch {
+      return NextResponse.json(
+        { message: `Invalid membership plan: "${planId}"` },
+        { status: 400 }
+      );
+    }
+
+    const memberId = session.recordId;
+    const memberName = session.name || "عضو Nasaq Gym";
+    const memberEmail = session.email;
+
+    // 3. Double-Click Idempotency Lock
+    const lockAcquired = await acquirePaymentCreationLock(memberId, plan.id);
+    if (!lockAcquired) {
+      return NextResponse.json(
+        { message: "A payment session is already being created. Please wait." },
+        { status: 429 }
+      );
+    }
+
+    // 4. Resolve member phone from Redis cache (0 Airtable reads)
+    let memberPhone: string | null = null;
+    try {
+      const cacheKey = REDIS_KEYS.MEMBER_PROFILE(memberId);
+      const cached = await getFromRedis<{ payload?: { phone?: string }; phone?: string }>(cacheKey);
+      if (cached) {
+        const profile = cached.payload ?? cached;
+        memberPhone = profile.phone || null;
+      }
+    } catch {
+      // Non-critical
+    }
+
+    const activeProvider = getActivePaymentProvider();
+
+    // ── MOCK PROVIDER (0 external calls, 0 credentials, 0 real money) ──────────
+    if (activeProvider.id === "mock") {
+      const mockResult = await createMockPaymentSession({
+        memberId,
+        memberName,
+        memberEmail,
+        memberPhone,
+        planId: plan.id,
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          provider: "mock",
+          paymentRef: mockResult.paymentRef,
+          paymentUrl: mockResult.paymentUrl,
+          plan: {
+            id: plan.id,
+            name: plan.nameAr,
+            price: plan.price,
+            currency: plan.currency,
+          },
+        },
+      });
+    }
+
+    // ── PAYTABS PROVIDER ─────────────────────────────────────────────────────
+    if (activeProvider.id === "paytabs") {
+      const appUrl = getBaseAppUrl(request);
+      const paymentRef = `ug_cart_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const returnUrl = `${appUrl}/payment/result?ref=${paymentRef}`;
+      const callbackUrl = `${appUrl}/api/payments/paytabs/callback`;
+
+      const payResult = await createPayTabsPayment({
+        memberId,
+        memberName,
+        memberEmail,
+        memberPhone,
+        planId: plan.id,
+        paymentRef,
+        returnUrl,
+        callbackUrl,
+      });
+
+      if (!payResult.success || !payResult.paymentUrl) {
+        await releasePaymentCreationLock(memberId, plan.id);
+        return NextResponse.json(
+          {
+            message: payResult.error || "PayTabs Test Profile is not configured or connection failed.",
+          },
+          { status: 502 }
+        );
+      }
+
+      await savePaymentTransaction({
+        paymentRef,
+        memberId,
+        memberName,
+        memberEmail,
+        memberPhone,
+        planId: plan.id,
+        amount: plan.price,
+        currency: plan.currency,
+        status: "pending",
+        provider: "paytabs",
+        tranRef: payResult.tranRef,
+        cartId: paymentRef,
+        paymentUrl: payResult.paymentUrl,
+        createdAt: Date.now(),
+      });
+
+      await incrementPaymentCreated();
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          provider: "paytabs",
+          paymentRef,
+          tranRef: payResult.tranRef,
+          paymentUrl: payResult.paymentUrl,
+          plan: {
+            id: plan.id,
+            name: plan.nameAr,
+            price: plan.price,
+            currency: plan.currency,
+          },
+        },
+      });
+    }
+
+    // ── MYFATOORAH PROVIDER ──────────────────────────────────────────────────
+    if (activeProvider.id === "myfatoorah") {
+      const appUrl = getBaseAppUrl(request);
+      const paymentRef = `ug_pay_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const callBackUrl = `${appUrl}/payment/result?ref=${paymentRef}`;
+      const errorUrl = `${appUrl}/payment/result?ref=${paymentRef}&status=error`;
+
+      const invoiceResult = await createPaymentInvoice({
+        memberId,
+        memberName,
+        memberEmail,
+        memberPhone,
+        planId: plan.id,
+        paymentRef,
+        callBackUrl,
+        errorUrl,
+      });
+
+      if (!invoiceResult.success || !invoiceResult.paymentUrl) {
+        await releasePaymentCreationLock(memberId, plan.id);
+        return NextResponse.json(
+          {
+            message: invoiceResult.error || "Failed to create MyFatoorah payment session",
+          },
+          { status: 502 }
+        );
+      }
+
+      await savePaymentTransaction({
+        paymentRef,
+        memberId,
+        memberName,
+        memberEmail,
+        memberPhone,
+        planId: plan.id,
+        amount: plan.price,
+        currency: plan.currency,
+        status: "pending",
+        provider: "myfatoorah",
+        invoiceId: invoiceResult.invoiceId,
+        paymentUrl: invoiceResult.paymentUrl,
+        createdAt: Date.now(),
+      });
+
+      await incrementPaymentCreated();
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          provider: "myfatoorah",
+          paymentRef,
+          invoiceId: invoiceResult.invoiceId,
+          paymentUrl: invoiceResult.paymentUrl,
+          plan: {
+            id: plan.id,
+            name: plan.nameAr,
+            price: plan.price,
+            currency: plan.currency,
+          },
+        },
+      });
+    }
+
+    return NextResponse.json({ message: "Unknown payment provider configured" }, { status: 500 });
+  } catch (error) {
+    console.error("[POST /api/payments/create] Error:", error);
+    const errMsg = error instanceof Error ? error.message : "Internal server error creating payment";
+    return NextResponse.json({ message: errMsg }, { status: 500 });
+  }
+}

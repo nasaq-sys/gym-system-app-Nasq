@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ultra Gym</string>
+    <string name="title_activity_main">Ultra Gym</string>
+    <string name="workout_rest_timer_channel_name">مؤقت راحة التمرين</string>
+    <string name="workout_rest_timer_channel_desc">يعرض العد التنازلي المباشر لفترة الراحة بين المجموعات</string>
+    <string name="workout_rest_completion_channel_name">تنبيه انتهاء الراحة</string>
+    <string name="workout_rest_completion_channel_desc">ينبهك عند انتهاء وقت الراحة لبدء الجولة التالية</string>
+</resources>

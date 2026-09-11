@@ -1,0 +1,49 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+/build/
+
+# typescript
+*.tsbuildinfo
+
+# environment
+.env*
+!.env.example
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# misc
+.DS_Store
+*.pem
+.vscode/
+.claude/
+
+# Netlify CLI local site linkage — machine-specific, not project config
+.netlify/
+
+# External reference clones
+_reference*/
+
+# Mobile / Android / iOS Build Artifacts
+.gradle/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/*.log
+android/capacitor-cordova-android-plugins/build/
+ios/App/Pods/
+ios/App/build/
+ios/App/DerivedData/
+ios/capacitor-cordova-ios-plugins/build/
+
+# OpenNext / Cloudflare
+/.open-next/
+/.wrangler/
+
