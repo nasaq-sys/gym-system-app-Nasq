@@ -31,6 +31,7 @@ import { resolveSubscriptionPeriod } from "@/lib/subscriptionUtils";
 import { useWorkoutTimer } from "@/lib/WorkoutTimerProvider";
 import { useGymWhatsApp } from "@/hooks/useGymWhatsApp";
 import { WhatsAppIcon } from "@/components/shared/SocialIcons";
+import { clientFetch, getClientCachedData } from "@/lib/clientCache";
 
 
 interface ProfileItem {
@@ -104,8 +105,8 @@ export default function ProfilePage() {
   const isAr = locale === "ar";
   const { cleanupOnLogout } = useWorkoutTimer();
   const { isLinked: isWaLinked, openWhatsApp, displayPhone: waDisplayPhone } = useGymWhatsApp();
-  const [member, setMember] = useState<MemberData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [member, setMember] = useState<MemberData | null>(() => getClientCachedData<MemberData>("/api/members"));
+  const [loading, setLoading] = useState(() => !getClientCachedData("/api/members"));
   const [loggingOut, setLoggingOut] = useState(false);
   const [renewModalOpen, setRenewModalOpen] = useState(false);
 
@@ -122,10 +123,10 @@ export default function ProfilePage() {
 
 
   const fetchProfile = useCallback(() => {
-    fetch("/api/members")
-      .then((r) => (r.ok ? r.json() : null))
+    clientFetch<MemberData>("/api/members", undefined, { ttlMs: 60000 })
       .then((res) => {
-        if (res?.data) setMember(res.data);
+        const data = (res as any)?.data ?? res;
+        if (data) setMember(data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -177,11 +178,11 @@ export default function ProfilePage() {
           {/* Top Bar inside Card */}
           <div className="flex items-center justify-between gap-3 border-b border-border/50 pb-4">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-xs">
-                NG
+              <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center text-accent-foreground font-black text-xs">
+                UG
               </div>
               <span className="font-extrabold text-xs uppercase tracking-wider text-foreground">
-                Nasaq Gym Pass
+                Ultra Gym Pass
               </span>
             </div>
             <div className="flex items-center gap-2">

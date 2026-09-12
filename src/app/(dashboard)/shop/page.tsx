@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MAX_ORDER_ITEM_QTY } from "@/lib/constants";
+import { clientFetch, getClientCachedData } from "@/lib/clientCache";
 
 
 interface MenuItem {
@@ -100,29 +101,29 @@ export default function ShopPage() {
     openCart,
   } = useCart();
 
-  const [menu, setMenu] = useState<MenuItem[]>([]);
-  const [menuLoading, setMenuLoading] = useState(true);
+  const [menu, setMenu] = useState<MenuItem[]>(() => getClientCachedData<MenuItem[]>("/api/cafe/menu") || []);
+  const [menuLoading, setMenuLoading] = useState(() => !getClientCachedData("/api/cafe/menu"));
   const [kitchenFilter, setKitchenFilter] = useState("all");
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [storeLoading, setStoreLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>(() => getClientCachedData<Product[]>("/api/store/products") || []);
+  const [storeLoading, setStoreLoading] = useState(() => !getClientCachedData("/api/store/products"));
   const [storeFilter, setStoreFilter] = useState("all");
 
   useEffect(() => {
-    fetch("/api/cafe/menu")
-      .then((r) => r.json())
+    clientFetch<any>("/api/cafe/menu", undefined, { ttlMs: 60000 })
       .then((res) => {
-        if (res.success) setMenu(res.data);
+        const data = res?.data ?? res;
+        if (Array.isArray(data)) setMenu(data);
       })
       .catch(() => {})
       .finally(() => setMenuLoading(false));
   }, []);
 
   useEffect(() => {
-    fetch("/api/store/products")
-      .then((r) => r.json())
+    clientFetch<any>("/api/store/products", undefined, { ttlMs: 60000 })
       .then((res) => {
-        if (res.success) setProducts(res.data);
+        const data = res?.data ?? res;
+        if (Array.isArray(data)) setProducts(data);
       })
       .catch(() => {})
       .finally(() => setStoreLoading(false));

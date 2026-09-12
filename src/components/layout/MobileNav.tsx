@@ -63,7 +63,7 @@ export default function MobileNav({ restricted = false }: { restricted?: boolean
       style={{ bottom: "calc(16px + env(safe-area-inset-bottom))" }}
       aria-label="Main navigation"
     >
-      <div className="pointer-events-auto flex items-center gap-7 rounded-full border border-border bg-card/90 px-7 py-3.5 shadow-2xl backdrop-blur-md">
+      <div className="pointer-events-auto flex items-center gap-7 rounded-full border border-border/80 bg-card/95 px-7 py-3.5 shadow-lg backdrop-blur-xs">
         {navItems.map((item) => (
           <NavItem
             key={item.key}

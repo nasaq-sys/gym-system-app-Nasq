@@ -1,6 +1,7 @@
 "use client";
 
 import { ShoppingCart } from "lucide-react";
+import Image from "next/image";
 import { useI18n } from "@/hooks/useI18n";
 import { useCart } from "@/lib/CartProvider";
 import NotificationBell from "@/components/shared/NotificationBell";
@@ -16,15 +17,19 @@ export default function Topbar({
   const { totalCount, openCart } = useCart();
 
   return (
-    <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xs border-b border-border">
       <div className="flex items-center justify-between px-4 md:px-6 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))]">
-        {/* Mobile: hamburger + brand */}
+        {/* Mobile: hamburger + logo */}
         <div className="flex items-center gap-3 md:hidden">
           <SideDrawer restricted={restricted} />
-          <span className="text-base font-black tracking-tight">
-            <span className="text-foreground">Nasaq </span>
-            <span className="text-primary">Gym</span>
-          </span>
+          <Image
+            src="/assets/ultra-gym-logo.png"
+            alt="Ultra Gym"
+            width={2048}
+            height={2048}
+            className="w-8 h-8 rounded-md"
+            priority
+          />
         </div>
 
         {/* Controls */}

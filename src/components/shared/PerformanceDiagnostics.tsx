@@ -39,7 +39,10 @@ export default function PerformanceDiagnostics() {
       }
     } catch {}
 
-    // Intercept fetch to track API latencies & Redis cache headers
+    const isDev = process.env.NODE_ENV === "development" || window.location.search.includes("diag=1");
+    if (!isDev) return;
+
+    // Intercept fetch to track API latencies & Redis cache headers in development mode
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
       const start = performance.now();
@@ -50,7 +53,7 @@ export default function PerformanceDiagnostics() {
         const source = res.headers.get("X-Cache-Source") || "network";
         const latency = res.headers.get("X-Cache-Latency") || `${duration}ms`;
 
-        if (url.includes("/api/")) {
+        if (url.includes("/api/") && trace.apiRequests.length < 50) {
           trace.apiRequests.push({
             url: url.replace(window.location.origin, ""),
             source,

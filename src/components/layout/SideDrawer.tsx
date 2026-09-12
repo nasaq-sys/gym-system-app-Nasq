@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Menu,
   X,
@@ -28,6 +29,7 @@ import FeedbackDialog from "@/components/shared/FeedbackDialog";
 import LanguageSwitch from "@/components/shared/LanguageSwitch";
 import ThemeSwitch from "@/components/shared/ThemeSwitch";
 import { useGymWhatsApp } from "@/hooks/useGymWhatsApp";
+import { clientFetch, getClientCachedData } from "@/lib/clientCache";
 import {
   Drawer,
   DrawerContent,
@@ -71,16 +73,24 @@ export default function SideDrawer({ restricted = false }: { restricted?: boolea
 
   const drawerGroups = restricted ? [] : DRAWER_GROUPS;
   const [open, setOpen] = useState(false);
-  const [balance, setBalance] = useState<number | number[] | undefined>(undefined);
+  const [balance, setBalance] = useState<number | number[] | undefined>(() => {
+    const cached = getClientCachedData<any>("/api/members");
+    return cached?.balance ?? cached?.data?.balance;
+  });
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/members")
-      .then((r) => (r.ok ? r.json() : null))
+    let cancelled = false;
+    clientFetch<any>("/api/members", undefined, { ttlMs: 60000 })
       .then((res) => {
-        if (res?.data) setBalance(res.data.balance);
+        if (cancelled) return;
+        const d = res?.data ?? res;
+        if (d?.balance !== undefined) setBalance(d.balance);
       })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -130,8 +140,16 @@ export default function SideDrawer({ restricted = false }: { restricted?: boolea
           {/* Header */}
           <DrawerHeader className="flex flex-row items-center justify-between px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] border-b border-border shrink-0">
             <div className="flex items-center gap-2.5">
-              <DrawerTitle className="text-lg font-black tracking-tight">
-                <span className="text-foreground">Nasaq </span>
+              <Image
+                src="/assets/ultra-gym-logo.png"
+                alt="Ultra Gym"
+                width={2048}
+                height={2048}
+                className="w-9 h-9 rounded-md"
+                priority
+              />
+              <DrawerTitle className="text-base font-bold tracking-tight">
+                <span className="text-foreground">Ultra </span>
                 <span className="text-primary">Gym</span>
               </DrawerTitle>
             </div>
@@ -217,7 +235,7 @@ export default function SideDrawer({ restricted = false }: { restricted?: boolea
                 href="https://www.instagram.com/ultragym.jo/?hl=ar"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Instagram"
+                aria-label="Ultra Gym on Instagram"
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors"
               >
                 <InstagramIcon className="w-[18px] h-[18px]" />
@@ -226,7 +244,7 @@ export default function SideDrawer({ restricted = false }: { restricted?: boolea
                 href="https://www.facebook.com/UltraGymJo/?locale=ar_AR"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Facebook"
+                aria-label="Ultra Gym on Facebook"
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors"
               >
                 <FacebookIcon className="w-[18px] h-[18px]" />

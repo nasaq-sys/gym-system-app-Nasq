@@ -45,16 +45,16 @@ import {
 } from "recharts";
 
 const workoutChartTheme = {
-  line: "#2563EB",
-  lineSecondary: "#3B82F6",
-  pointFill: "#2563EB",
-  pointBorder: "#93C5FD",
-  activePoint: "#1D4ED8",
+  line: "#FF5A0A",
+  lineSecondary: "#FF7A32",
+  pointFill: "#FF5A0A",
+  pointBorder: "#FFD0B8",
+  activePoint: "#FF6A1A",
   axisText: "#AFAFAF",
   axisValue: "#C8C8C8",
   grid: "rgba(255, 255, 255, 0.10)",
   tooltipBackground: "#242424",
-  tooltipBorder: "rgba(37, 99, 235, 0.45)",
+  tooltipBorder: "rgba(255, 90, 10, 0.45)",
   tooltipPrimaryText: "#FFFFFF",
   tooltipSecondaryText: "#C8C8C8",
 };
@@ -865,11 +865,11 @@ export default function WorkoutsPage() {
       cancelLog();
     };
 
-    document.addEventListener("pointerdown", onPointerDown, true);
-    document.addEventListener("pointerup", onPointerUp, true);
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("pointerup", onPointerUp);
     return () => {
-      document.removeEventListener("pointerdown", onPointerDown, true);
-      document.removeEventListener("pointerup", onPointerUp, true);
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("pointerup", onPointerUp);
     };
   }, [expanded, logExerciseId, cancelLog]);
 
@@ -1184,16 +1184,16 @@ export default function WorkoutsPage() {
             {restTimerOpen && restTimerActive ? (
               <Button
                 onClick={stopRestTimer}
-                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-blue-600 via-primary to-indigo-600 text-white shadow-xl shadow-primary/30 hover:brightness-110 gap-2 cursor-pointer animate-pulse"
+                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-amber-500 via-orange-500 to-[#E8622C] text-white shadow-xl shadow-amber-500/30 hover:brightness-110 gap-2 cursor-pointer animate-pulse"
               >
                 <Timer className="w-5 h-5 animate-spin" />
-                <span>{isAr ? "إنهاء الراحة والبدء بالجولة التالية" : "Finish Rest & Start Next Set"}</span>
+                <span>{isAr ? "إنهاء الراحة والبدء بالجولة التالية ⏱️" : "Finish Rest & Start Next Set"}</span>
               </Button>
             ) : (
               <Button
                 onClick={handleFocusSubmitSet}
                 disabled={isSubmittingSet}
-                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-primary via-blue-600 to-indigo-600 text-white shadow-xl shadow-primary/30 hover:brightness-110 gap-2 cursor-pointer transition-all disabled:opacity-75"
+                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-primary via-orange-500 to-[#E8622C] text-white shadow-xl shadow-primary/30 hover:brightness-110 gap-2 cursor-pointer transition-all disabled:opacity-75"
               >
                 <Check className="w-5 h-5 stroke-[3]" />
                 <span>{isAr ? "سجّل المجموعة — ابدأ الراحة" : "Log Set — Start Rest"}</span>
@@ -1424,10 +1424,10 @@ export default function WorkoutsPage() {
               {/* Primary CTA Button: Launch 1c Focus Mode */}
               <Button
                 onClick={() => startFocusMode(0)}
-                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-primary via-blue-600 to-indigo-600 text-white shadow-xl shadow-primary/30 hover:brightness-110 gap-2 cursor-pointer"
+                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-primary via-orange-500 to-[#E8622C] text-white shadow-xl shadow-primary/30 hover:brightness-110 gap-2 cursor-pointer"
               >
                 <Flame className="w-5 h-5" />
-                <span>{isAr ? "ابدأ التمرين الآن (وضع التركيز)" : "Start Workout (Focus Mode)"}</span>
+                <span>{isAr ? "🔥 ابدأ التمرين الآن (وضع التركيز)" : "🔥 Start Workout (Focus Mode)"}</span>
               </Button>
 
               {/* Vacation Button (Available for all trainees) */}
@@ -1759,31 +1759,6 @@ export default function WorkoutsPage() {
           {groupExercises.map((exercise) => {
             const isExpanded = expanded === exercise.id;
             const isLogging = logExerciseId === exercise.id;
-
-            const daySessions = groupHistoryByDay(exercise.history);
-
-            // Derive chart data: if multiple days, plot maxWeight per day.
-            // If only 1 day with multiple sets, plot progression of each set.
-            let chartData: { label: string; weight: number; setsCount?: number; reps?: number }[] = [];
-            let chartTitle = isAr ? "التقدم عبر الوقت" : "Progress Over Time";
-
-            if (daySessions.length > 1) {
-              chartData = [...daySessions]
-                .reverse()
-                .map((s) => ({
-                  label: formatDate(s.date),
-                  weight: s.maxWeight,
-                  setsCount: s.totalSets,
-                }));
-            } else if (daySessions.length === 1 && daySessions[0].sets.length > 1) {
-              chartTitle = isAr ? "تقدم جولات اليوم" : "Today's Sets Progress";
-              chartData = daySessions[0].sets.map((s, sIdx) => ({
-                label: isAr ? `الجولة ${s.sets || sIdx + 1}` : `Set ${s.sets || sIdx + 1}`,
-                weight: s.weight,
-                reps: s.reps,
-              }));
-            }
-
             const curDoneCount = completedSetsMap[exercise.id] || 0;
 
             return (
@@ -1978,13 +1953,35 @@ export default function WorkoutsPage() {
                 )}
 
                 {/* Expanded History */}
-                {isExpanded && exercise.history.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-border space-y-4 animate-fade-in">
+                {isExpanded && exercise.history.length > 0 && (() => {
+                  const daySessions = groupHistoryByDay(exercise.history);
+                  let chartData: { label: string; weight: number; setsCount?: number; reps?: number }[] = [];
+                  let chartTitle = isAr ? "التقدم عبر الوقت" : "Progress Over Time";
+
+                  if (daySessions.length > 1) {
+                    chartData = [...daySessions]
+                      .reverse()
+                      .map((s) => ({
+                        label: formatDate(s.date),
+                        weight: s.maxWeight,
+                        setsCount: s.totalSets,
+                      }));
+                  } else if (daySessions.length === 1 && daySessions[0].sets.length > 1) {
+                    chartTitle = isAr ? "تقدم جولات اليوم" : "Today's Sets Progress";
+                    chartData = daySessions[0].sets.map((s, sIdx) => ({
+                      label: isAr ? `الجولة ${s.sets || sIdx + 1}` : `Set ${s.sets || sIdx + 1}`,
+                      weight: s.weight,
+                      reps: s.reps,
+                    }));
+                  }
+
+                  return (
+                    <div className="mt-4 pt-4 border-t border-border space-y-4 animate-fade-in">
                     {chartData.length > 1 && (
                       <div className="rounded-2xl bg-card-hover/60 border border-border/70 p-3.5 space-y-3">
                         <div className="flex items-center justify-between">
                           <p className="text-xs text-foreground/90 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                            <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                            <TrendingUp className="w-3.5 h-3.5 text-[#FF5A0A]" />
                             <span>{chartTitle}</span>
                           </p>
                           <span className="text-2xs font-bold text-foreground/70 bg-background/80 px-2 py-0.5 rounded-md border border-border/50">
@@ -2217,7 +2214,8 @@ export default function WorkoutsPage() {
                       })()}
                     </div>
                   </div>
-                )}
+                );
+              })()}
                 </CardContent>
               </Card>
               </div>

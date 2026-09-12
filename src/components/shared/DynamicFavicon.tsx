@@ -20,6 +20,11 @@ export default function DynamicFavicon() {
       : "/icons/badge-monochrome.png?v=mb_7";
 
     const updateFavicon = () => {
+      let dynamicLink = document.getElementById("dynamic-favicon") as HTMLLinkElement | null;
+      if (dynamicLink && (dynamicLink.href === iconPath || dynamicLink.href.endsWith(iconPath))) {
+        return;
+      }
+
       // 1. Update all existing icon link tags in document head
       const links = document.querySelectorAll<HTMLLinkElement>(
         "link[rel*='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']"
@@ -34,7 +39,6 @@ export default function DynamicFavicon() {
       }
 
       // 2. Ensure dynamic-favicon link exists
-      let dynamicLink = document.getElementById("dynamic-favicon") as HTMLLinkElement | null;
       if (!dynamicLink) {
         dynamicLink = document.createElement("link");
         dynamicLink.id = "dynamic-favicon";
