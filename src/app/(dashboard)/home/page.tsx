@@ -312,13 +312,14 @@ export default function HomePage() {
           <div className="shrink-0">
             {isSubEnded ? (
               <div className="flex flex-col items-end gap-1.5">
-                <Badge variant="destructive" className="font-bold text-xs px-2.5 py-0.5">
-                  {t("home.subscriptionEnded")}
-                </Badge>
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-destructive/10 border border-destructive/20 text-destructive text-2xs font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
+                  <span>{t("home.subscriptionEnded")}</span>
+                </div>
                 <Button
                   size="sm"
                   onClick={() => setRenewModalOpen(true)}
-                  className="h-7 text-2xs px-2.5 rounded-lg font-bold bg-primary text-primary-foreground gap-1 shadow-sm cursor-pointer"
+                  className="h-7 text-2xs px-2.5 rounded-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 gap-1 shadow-xs transition-all active:scale-98 cursor-pointer"
                 >
                   <CreditCard className="w-3 h-3" />
                   <span>{isAr ? "تجديد الآن" : "Renew"}</span>
@@ -452,21 +453,20 @@ export default function HomePage() {
           </div>
 
           {/* Subscription Ring & Status Badge */}
-          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-muted/40 border border-border/80 shrink-0 self-start md:self-auto">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-card border border-border/80 shadow-xs shrink-0 self-start md:self-auto">
             {isSubEnded ? (
               <div className="flex flex-col items-start md:items-end gap-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="destructive" className="font-bold text-xs px-3 py-1">
-                    {t("home.subscriptionEnded")}
-                  </Badge>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0 animate-pulse" />
+                  <span>{t("home.subscriptionEnded")}</span>
                 </div>
-                <span className="text-2xs text-foreground/70">
+                <span className="text-2xs text-muted-foreground font-medium">
                   {isAr ? "يرجى التجديد للاستمرار" : "Please renew to access"}
                 </span>
                 <Button
                   size="sm"
                   onClick={() => setRenewModalOpen(true)}
-                  className="h-8 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 shadow-md shadow-primary/20 cursor-pointer"
+                  className="h-8.5 px-3.5 rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 shadow-xs transition-all active:scale-98 cursor-pointer"
                 >
                   <CreditCard className="w-3.5 h-3.5" />
                   <span>{isAr ? "تجديد الاشتراك أونلاين" : "Renew Online"}</span>
