@@ -114,8 +114,8 @@ function LoginForm() {
   return (
     <div className="dark fixed inset-0 bg-background text-foreground flex items-center justify-center p-4 sm:p-6 z-50 overflow-hidden [color-scheme:dark]">
       {/* Subtle Ambient Glows */}
-      <div className="absolute top-1/4 start-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 end-10 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 start-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 end-10 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md animate-fade-up relative z-10">
         <div className="bg-card border border-border rounded-3xl p-7 sm:p-9 shadow-2xl space-y-6">

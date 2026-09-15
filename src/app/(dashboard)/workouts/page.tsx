@@ -45,16 +45,16 @@ import {
 } from "recharts";
 
 const workoutChartTheme = {
-  line: "#FF5A0A",
-  lineSecondary: "#FF7A32",
-  pointFill: "#FF5A0A",
-  pointBorder: "#FFD0B8",
-  activePoint: "#FF6A1A",
+  line: "#2563EB",
+  lineSecondary: "#38BDF8",
+  pointFill: "#2563EB",
+  pointBorder: "#BAE6FD",
+  activePoint: "#1D4ED8",
   axisText: "#AFAFAF",
   axisValue: "#C8C8C8",
   grid: "rgba(255, 255, 255, 0.10)",
-  tooltipBackground: "#242424",
-  tooltipBorder: "rgba(255, 90, 10, 0.45)",
+  tooltipBackground: "#1E293B",
+  tooltipBorder: "rgba(37, 99, 235, 0.45)",
   tooltipPrimaryText: "#FFFFFF",
   tooltipSecondaryText: "#C8C8C8",
 };
@@ -1184,16 +1184,16 @@ export default function WorkoutsPage() {
             {restTimerOpen && restTimerActive ? (
               <Button
                 onClick={stopRestTimer}
-                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-amber-500 via-orange-500 to-[#E8622C] text-white shadow-xl shadow-amber-500/30 hover:brightness-110 gap-2 cursor-pointer animate-pulse"
+                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-blue-600 via-blue-500 to-sky-500 text-white shadow-xl shadow-blue-500/30 hover:brightness-110 gap-2 cursor-pointer animate-pulse"
               >
                 <Timer className="w-5 h-5 animate-spin" />
-                <span>{isAr ? "إنهاء الراحة والبدء بالجولة التالية ⏱️" : "Finish Rest & Start Next Set"}</span>
+                <span>{isAr ? "إنهاء الراحة والبدء بالجولة التالية" : "Finish Rest & Start Next Set"}</span>
               </Button>
             ) : (
               <Button
                 onClick={handleFocusSubmitSet}
                 disabled={isSubmittingSet}
-                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-primary via-orange-500 to-[#E8622C] text-white shadow-xl shadow-primary/30 hover:brightness-110 gap-2 cursor-pointer transition-all disabled:opacity-75"
+                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-primary via-blue-600 to-sky-500 text-white shadow-xl shadow-primary/30 hover:brightness-110 gap-2 cursor-pointer transition-all disabled:opacity-75"
               >
                 <Check className="w-5 h-5 stroke-[3]" />
                 <span>{isAr ? "سجّل المجموعة — ابدأ الراحة" : "Log Set — Start Rest"}</span>
@@ -1424,10 +1424,10 @@ export default function WorkoutsPage() {
               {/* Primary CTA Button: Launch 1c Focus Mode */}
               <Button
                 onClick={() => startFocusMode(0)}
-                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-primary via-orange-500 to-[#E8622C] text-white shadow-xl shadow-primary/30 hover:brightness-110 gap-2 cursor-pointer"
+                className="w-full h-14 rounded-2xl font-black text-base bg-gradient-to-r from-primary via-blue-600 to-sky-500 text-white shadow-xl shadow-primary/30 hover:brightness-110 gap-2 cursor-pointer"
               >
                 <Flame className="w-5 h-5" />
-                <span>{isAr ? "🔥 ابدأ التمرين الآن (وضع التركيز)" : "🔥 Start Workout (Focus Mode)"}</span>
+                <span>{isAr ? "ابدأ التمرين الآن (وضع التركيز)" : "Start Workout (Focus Mode)"}</span>
               </Button>
 
               {/* Vacation Button (Available for all trainees) */}
@@ -1981,7 +1981,7 @@ export default function WorkoutsPage() {
                       <div className="rounded-2xl bg-card-hover/60 border border-border/70 p-3.5 space-y-3">
                         <div className="flex items-center justify-between">
                           <p className="text-xs text-foreground/90 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                            <TrendingUp className="w-3.5 h-3.5 text-[#FF5A0A]" />
+                            <TrendingUp className="w-3.5 h-3.5 text-primary" />
                             <span>{chartTitle}</span>
                           </p>
                           <span className="text-2xs font-bold text-foreground/70 bg-background/80 px-2 py-0.5 rounded-md border border-border/50">

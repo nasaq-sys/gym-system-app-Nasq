@@ -24,7 +24,7 @@ export default function Topbar({
           <SideDrawer restricted={restricted} />
           <Image
             src="/assets/ultra-gym-logo.png"
-            alt="Ultra Gym"
+            alt="Nasaq Gym"
             width={2048}
             height={2048}
             className="w-8 h-8 rounded-md"

@@ -26,9 +26,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Ultra Gym - Member Portal",
+  title: "Nasaq Gym - Member Portal",
   description: "Your gym management dashboard",
-  applicationName: "Ultra Gym",
+  applicationName: "Nasaq Gym",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Ultra Gym",
+    title: "Nasaq Gym",
   },
 };
 
@@ -78,7 +78,7 @@ export default async function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Ultra Gym" />
+        <meta name="apple-mobile-web-app-title" content="Nasaq Gym" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=2" />
         <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=2" />

@@ -235,21 +235,21 @@ export default function InstallPrompt() {
         className={cn(
           "fixed z-[999] max-w-[360px] sm:max-w-[390px] w-[92%]",
           "inset-x-0 bottom-6 sm:bottom-8 mx-auto",
-          "bg-white/[0.12] dark:bg-black/[0.45]",
-          "border border-white/25 dark:border-white/15",
-          "shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.4),0_25px_60px_-15px_rgba(0,0,0,0.8)]",
+          "bg-gradient-to-b from-blue-950/60 to-slate-950/80 dark:from-[#08152e]/95 dark:to-[#040915]/95",
+          "border border-blue-400/30 dark:border-blue-500/35",
+          "shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.25),0_25px_60px_-15px_rgba(0,0,0,0.85),0_0_35px_rgba(37,99,235,0.25)]",
           "text-white rounded-[32px] p-5 sm:p-6",
           "animate-in zoom-in-95 slide-in-from-bottom-6 duration-300"
         )}
       >
         {/* ── Top Glass Sheen Overlay ── */}
-        <div className="absolute inset-x-0 top-0 h-24 rounded-t-[32px] bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-24 rounded-t-[32px] bg-gradient-to-b from-blue-400/15 to-transparent pointer-events-none" />
 
         {/* ── HEADER ── */}
         <div className="relative z-10 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {/* Circular App Logo with Glass Border */}
-            <div className="w-12 h-12 rounded-full overflow-hidden border border-white/30 bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 shadow-lg p-1">
+            <div className="w-12 h-12 rounded-full overflow-hidden border border-blue-400/40 bg-blue-500/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20 p-1">
               <Image
                 src="/apple-touch-icon.png"
                 alt="Nasaq Gym"
@@ -264,7 +264,7 @@ export default function InstallPrompt() {
               <h3 className="font-bold text-base sm:text-lg text-white leading-tight drop-shadow-sm">
                 {t("pwaInstall.title")}
               </h3>
-              <p className="text-xs text-white/80 leading-tight mt-0.5">
+              <p className="text-xs text-blue-200/90 leading-tight mt-0.5">
                 {t("pwaInstall.subtitle")}
               </p>
             </div>
@@ -282,7 +282,7 @@ export default function InstallPrompt() {
         </div>
 
         {/* Glass Divider */}
-        <div className="relative z-10 border-b border-white/15 my-3.5" />
+        <div className="relative z-10 border-b border-blue-400/20 my-3.5" />
 
         {/* ── VIEW 1: INITIAL PROMPT ── */}
         {stepView === "initial" ? (
@@ -291,19 +291,19 @@ export default function InstallPrompt() {
               {t("pwaInstall.description")}
             </p>
 
-            {/* Glass Primary Action Button */}
+            {/* Blue Primary Action Button */}
             <button
               type="button"
               onClick={handleInstallClick}
               className={cn(
                 "w-full h-12 rounded-2xl",
-                "bg-white/20 hover:bg-white/30 active:bg-white/15 active:scale-98",
-                "border border-white/30 backdrop-blur-xl text-white font-bold text-xs sm:text-sm",
-                "shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.4),0_8px_20px_rgba(0,0,0,0.35)]",
+                "bg-primary hover:brightness-110 active:scale-98",
+                "border border-primary/40 text-primary-foreground font-extrabold text-xs sm:text-sm",
+                "shadow-[inset_0_1px_1px_0_rgba(255,255,255,0.3),0_8px_25px_rgba(37,99,235,0.35)]",
                 "flex items-center justify-center gap-2.5 transition-all cursor-pointer"
               )}
             >
-              <div className="w-5 h-5 rounded-md border border-white/50 bg-white/10 flex items-center justify-center">
+              <div className="w-5 h-5 rounded-md border border-white/50 bg-white/20 flex items-center justify-center">
                 <Plus className="w-3.5 h-3.5" />
               </div>
               <span className="drop-shadow-xs">{t("pwaInstall.addButton")}</span>
@@ -317,9 +317,9 @@ export default function InstallPrompt() {
             </p>
 
             {/* Step 1: Open in Safari / Main Browser */}
-            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/15 backdrop-blur-md transition-colors">
-              <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner">
-                <Compass className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] border border-blue-400/20 backdrop-blur-md transition-colors">
+              <div className="w-10 h-10 rounded-full bg-blue-500/25 border border-blue-400/35 backdrop-blur-md flex items-center justify-center text-blue-200 shrink-0 shadow-inner">
+                <Compass className="w-5 h-5 text-blue-200" />
               </div>
               <span className="text-xs font-semibold text-white/95 leading-tight drop-shadow-xs">
                 {t("pwaInstall.step1")}
@@ -327,9 +327,9 @@ export default function InstallPrompt() {
             </div>
 
             {/* Step 2: More button if no share */}
-            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/15 backdrop-blur-md transition-colors">
-              <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner">
-                <MoreHorizontal className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] border border-blue-400/20 backdrop-blur-md transition-colors">
+              <div className="w-10 h-10 rounded-full bg-blue-500/25 border border-blue-400/35 backdrop-blur-md flex items-center justify-center text-blue-200 shrink-0 shadow-inner">
+                <MoreHorizontal className="w-5 h-5 text-blue-200" />
               </div>
               <span className="text-xs font-semibold text-white/95 leading-tight drop-shadow-xs">
                 {t("pwaInstall.step2")}
@@ -337,9 +337,9 @@ export default function InstallPrompt() {
             </div>
 
             {/* Step 3: Press Share */}
-            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/15 backdrop-blur-md transition-colors">
-              <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner">
-                <Share className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] border border-blue-400/20 backdrop-blur-md transition-colors">
+              <div className="w-10 h-10 rounded-full bg-blue-500/25 border border-blue-400/35 backdrop-blur-md flex items-center justify-center text-blue-200 shrink-0 shadow-inner">
+                <Share className="w-5 h-5 text-blue-200" />
               </div>
               <span className="text-xs font-semibold text-white/95 leading-tight drop-shadow-xs">
                 {t("pwaInstall.step3")}
@@ -347,9 +347,9 @@ export default function InstallPrompt() {
             </div>
 
             {/* Step 4: Add to Home Screen */}
-            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] border border-white/15 backdrop-blur-md transition-colors">
-              <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner">
-                <PlusSquare className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.08] hover:bg-white/[0.12] border border-blue-400/20 backdrop-blur-md transition-colors">
+              <div className="w-10 h-10 rounded-full bg-blue-500/25 border border-blue-400/35 backdrop-blur-md flex items-center justify-center text-blue-200 shrink-0 shadow-inner">
+                <PlusSquare className="w-5 h-5 text-blue-200" />
               </div>
               <span className="text-xs font-semibold text-white/95 leading-tight drop-shadow-xs">
                 {t("pwaInstall.step4")}

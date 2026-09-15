@@ -178,11 +178,11 @@ export default function ProfilePage() {
           {/* Top Bar inside Card */}
           <div className="flex items-center justify-between gap-3 border-b border-border/50 pb-4">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center text-accent-foreground font-black text-xs">
-                UG
+              <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-primary font-black text-xs">
+                NG
               </div>
               <span className="font-extrabold text-xs uppercase tracking-wider text-foreground">
-                Ultra Gym Pass
+                Nasaq Gym Pass
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export default function ProfilePage() {
               )}
               {member?.nfc && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs font-semibold bg-card-hover border border-border text-foreground/70">
-                  <Radio className="w-3 h-3 text-accent animate-pulse" />
+                  <Radio className="w-3 h-3 text-primary animate-pulse" />
                   NFC
                 </span>
               )}
@@ -204,7 +204,7 @@ export default function ProfilePage() {
           {/* Member Main Identity */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#FF5722] via-[#FF7A00] to-[#FFA726] border-2 border-amber-300/80 flex items-center justify-center shadow-lg shadow-orange-500/40 ring-4 ring-orange-500/20 shrink-0">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-blue-700 via-blue-600 to-sky-400 border-2 border-sky-300/80 flex items-center justify-center shadow-lg shadow-blue-500/40 ring-4 ring-blue-500/20 shrink-0">
                 <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] tracking-wider">
                   {initials(member?.name)}
                 </span>

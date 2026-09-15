@@ -266,7 +266,7 @@ export default function WorkoutRestTimer() {
               variant="default"
               size="sm"
               onClick={stopRestTimer}
-              className="flex-1 h-9 rounded-xl font-bold text-xs gap-1 bg-gradient-to-r from-primary to-orange-600 hover:from-primary/90 hover:to-orange-600/90 text-primary-foreground shadow-md shadow-primary/20"
+              className="flex-1 h-9 rounded-xl font-bold text-xs gap-1 bg-gradient-to-r from-primary to-blue-700 hover:from-primary/90 hover:to-blue-700/90 text-primary-foreground shadow-md shadow-primary/20"
             >
               <Check className="w-3.5 h-3.5" />
               <span>{isAr ? "إنهاء الراحة" : "Finish Rest"}</span>

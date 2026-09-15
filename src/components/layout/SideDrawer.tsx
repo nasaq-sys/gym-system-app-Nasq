@@ -142,14 +142,14 @@ export default function SideDrawer({ restricted = false }: { restricted?: boolea
             <div className="flex items-center gap-2.5">
               <Image
                 src="/assets/ultra-gym-logo.png"
-                alt="Ultra Gym"
+                alt="Nasaq Gym"
                 width={2048}
                 height={2048}
                 className="w-9 h-9 rounded-md"
                 priority
               />
               <DrawerTitle className="text-base font-bold tracking-tight">
-                <span className="text-foreground">Ultra </span>
+                <span className="text-foreground">Nasaq </span>
                 <span className="text-primary">Gym</span>
               </DrawerTitle>
             </div>
@@ -235,7 +235,7 @@ export default function SideDrawer({ restricted = false }: { restricted?: boolea
                 href="https://www.instagram.com/ultragym.jo/?hl=ar"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Ultra Gym on Instagram"
+                aria-label="Nasaq Gym on Instagram"
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors"
               >
                 <InstagramIcon className="w-[18px] h-[18px]" />
@@ -244,7 +244,7 @@ export default function SideDrawer({ restricted = false }: { restricted?: boolea
                 href="https://www.facebook.com/UltraGymJo/?locale=ar_AR"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Ultra Gym on Facebook"
+                aria-label="Nasaq Gym on Facebook"
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors"
               >
                 <FacebookIcon className="w-[18px] h-[18px]" />
