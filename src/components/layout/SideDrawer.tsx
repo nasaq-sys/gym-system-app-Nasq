@@ -2,7 +2,6 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
 import {
   Menu,
   X,
@@ -140,14 +139,6 @@ export default function SideDrawer({ restricted = false }: { restricted?: boolea
           {/* Header */}
           <DrawerHeader className="flex flex-row items-center justify-between px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] border-b border-border shrink-0">
             <div className="flex items-center gap-2.5">
-              <Image
-                src="/assets/ultra-gym-logo.png"
-                alt="Nasaq Gym"
-                width={2048}
-                height={2048}
-                className="w-9 h-9 rounded-md"
-                priority
-              />
               <DrawerTitle className="text-base font-bold tracking-tight">
                 <span className="text-foreground">Nasaq </span>
                 <span className="text-primary">Gym</span>

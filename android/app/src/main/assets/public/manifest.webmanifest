@@ -15,12 +15,6 @@
   "gcm_sender_id": "103953800507",
   "icons": [
     {
-      "src": "/assets/ultra-gym-logo.png",
-      "sizes": "2048x2048",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
       "src": "/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png",

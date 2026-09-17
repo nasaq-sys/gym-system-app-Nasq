@@ -33,6 +33,7 @@ interface TokenPayload {
   email?: string;
   role?: string;
   recordId?: string;
+  exp?: number;
 }
 
 function extractSessionFromToken(token?: string): TokenPayload | null {
@@ -47,7 +48,16 @@ function extractSessionFromToken(token?: string): TokenPayload | null {
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
     const decoded = atob(padded);
     const payload = JSON.parse(decoded);
-    return payload && typeof payload === "object" ? payload : null;
+    if (!payload || typeof payload !== "object") return null;
+
+    // Check expiration if present
+    if (payload.exp && typeof payload.exp === "number") {
+      if (Date.now() >= payload.exp * 1000) {
+        return null;
+      }
+    }
+
+    return payload;
   } catch {
     return null;
   }
@@ -438,6 +448,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   }
 
   // ── 5. Role-Based Access Control (RBAC Guards) ───────────────────
+  // Trainer portal & Trainer API
   if (pathname.startsWith("/trainer") || pathname.startsWith("/api/trainer")) {
     if (!session || userRole !== "trainer") {
       if (pathname.startsWith("/api/")) {
@@ -450,9 +461,52 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     }
   }
 
-  // ── 6. Root redirect ───────────────────────────────────────────────
+  // ── 6. Member Protected Routes ──────────────────────────────────────
+  const PROTECTED_MEMBER_ROUTES = [
+    "/home",
+    "/workouts",
+    "/nutrition",
+    "/meal-calculator",
+    "/shop",
+    "/store",
+    "/my-orders",
+    "/profile",
+    "/followups",
+    "/lost-and-found",
+    "/payment",
+    "/events",
+    "/notifications",
+    "/kitchen-display",
+  ];
+
+  const isProtectedMemberRoute = PROTECTED_MEMBER_ROUTES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+
+  if (isProtectedMemberRoute) {
+    if (!session) {
+      const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+      return withLog(NextResponse.redirect(new URL(redirectUrl, request.url)));
+    }
+    // Trainer attempting to access member home bounces to trainer portal
+    if (userRole === "trainer" && (pathname === "/home" || pathname.startsWith("/home/"))) {
+      return withLog(NextResponse.redirect(new URL("/trainer", request.url)));
+    }
+  }
+
+  // ── 7. Login route redirection (if already authenticated) ───────────
+  if (pathname === "/login" && session) {
+    const targetUrl = userRole === "trainer" ? "/trainer" : "/home";
+    return withLog(NextResponse.redirect(new URL(targetUrl, request.url)));
+  }
+
+  // ── 8. Root redirect ───────────────────────────────────────────────
   if (pathname === "/") {
-    return withLog(NextResponse.redirect(new URL("/home", request.url)));
+    if (!session) {
+      return withLog(NextResponse.redirect(new URL("/login", request.url)));
+    }
+    const targetUrl = userRole === "trainer" ? "/trainer" : "/home";
+    return withLog(NextResponse.redirect(new URL(targetUrl, request.url)));
   }
 
   return withLog(NextResponse.next());

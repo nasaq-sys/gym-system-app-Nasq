@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
 import {
   Compass,
   MoreHorizontal,
@@ -11,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/hooks/useI18n";
@@ -248,16 +248,9 @@ export default function InstallPrompt() {
         {/* ── HEADER ── */}
         <div className="relative z-10 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Circular App Logo with Glass Border */}
-            <div className="w-12 h-12 rounded-full overflow-hidden border border-blue-400/40 bg-blue-500/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20 p-1">
-              <Image
-                src="/apple-touch-icon.png"
-                alt="Nasaq Gym"
-                width={44}
-                height={44}
-                className="w-full h-full object-contain rounded-full"
-                priority
-              />
+            {/* Icon Container with Glass Border */}
+            <div className="w-12 h-12 rounded-2xl border border-blue-400/40 bg-blue-500/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
+              <Smartphone className="w-6 h-6 text-white" />
             </div>
 
             <div className="min-w-0">

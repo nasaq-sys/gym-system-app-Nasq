@@ -121,11 +121,7 @@ export default function DashboardShell({
         })
         .catch(() => {
           if (cancelled) return;
-          if (isRetry) {
-            window.location.href = "/login";
-          } else {
-            setTimeout(() => check(true), 2000);
-          }
+          window.location.href = "/login";
         });
     };
 
