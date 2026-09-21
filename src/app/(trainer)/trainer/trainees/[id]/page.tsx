@@ -313,7 +313,7 @@ export default function TraineeSchedulePage() {
     protein: "150",
     carbs: "220",
     fat: "60",
-    goal: "تضخيم وبناء عضلات",
+    goal: "زيادة العضل",
     meals: [
       { id: "m_1", name: "وجبة 1 (إفطار)", content: "4 بيضات مسلوقة + 80غ شوفان مع حليب وتوت" },
       { id: "m_2", name: "سناك 1 (صباحي)", content: "تفاحة + 30غ مكسرات نية" },
@@ -1751,13 +1751,15 @@ export default function TraineeSchedulePage() {
                         <label className="text-xs font-bold text-foreground/70 block mb-1">
                           {isAr ? "الهدف الغذائي" : "Goal"}
                         </label>
-                        <input
-                          type="text"
+                        <select
                           value={nutritionForm.goal}
                           onChange={(e) => setNutritionForm({ ...nutritionForm, goal: e.target.value })}
-                          placeholder={isAr ? "تضخيم، تنشيف، وزن مثالي..." : "Bulking, Cutting..."}
-                          className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-accent"
-                        />
+                          className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-accent cursor-pointer"
+                        >
+                          <option value="زيادة العضل">{isAr ? "زيادة العضل (تضخيم)" : "Muscle Gain"}</option>
+                          <option value="تنشيف">{isAr ? "تنشيف (خسارة الدهون)" : "Cutting / Fat Loss"}</option>
+                          <option value="تثبيت وزن">{isAr ? "تثبيت الوزن (محافظة)" : "Maintenance"}</option>
+                        </select>
                       </div>
 
                       <div>

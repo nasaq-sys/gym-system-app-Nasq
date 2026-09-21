@@ -87,6 +87,38 @@ export async function GET(
   }
 }
 
+function normalizeNutritionGoal(rawGoal?: string): "زيادة العضل" | "تنشيف" | "تثبيت وزن" {
+  if (!rawGoal) return "زيادة العضل";
+  const g = String(rawGoal).toLowerCase().trim();
+  if (
+    g.includes("تنشيف") ||
+    g.includes("خسارة") ||
+    g.includes("حرق") ||
+    g.includes("نقص") ||
+    g.includes("fat") ||
+    g.includes("cut") ||
+    g.includes("loss") ||
+    g.includes("diet") ||
+    g.includes("ريجيم")
+  ) {
+    return "تنشيف";
+  }
+  if (
+    g.includes("تثبيت") ||
+    g.includes("محافظة") ||
+    g.includes("صحة") ||
+    g.includes("متوازن") ||
+    g.includes("maintain") ||
+    g.includes("maintenance") ||
+    g.includes("fitness") ||
+    g.includes("لياقة")
+  ) {
+    return "تثبيت وزن";
+  }
+  // Default and handles "تضخيم", "بناء", "زيادة", "عضل", "bulk", "muscle", etc.
+  return "زيادة العضل";
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -119,7 +151,7 @@ export async function POST(
       [NUTRITION_PLAN_FIELDS.PROTEIN]: Number(body.protein) || 0,
       [NUTRITION_PLAN_FIELDS.CARBS]: Number(body.carbs) || 0,
       [NUTRITION_PLAN_FIELDS.FAT]: Number(body.fat) || 0,
-      [NUTRITION_PLAN_FIELDS.GOAL]: String(body.goal || "").trim(),
+      [NUTRITION_PLAN_FIELDS.GOAL]: normalizeNutritionGoal(body.goal),
       ...mealFields,
     };
 
@@ -173,8 +205,10 @@ export async function POST(
     });
   } catch (error) {
     console.error("Trainer nutrition save error:", error);
+    const rawMessage = error instanceof Error ? error.message : "Failed to save nutrition plan";
+    const sanitizedMessage = rawMessage.replace(/Bearer\s+[A-Za-z0-9._-]+/gi, "[REDACTED]");
     return NextResponse.json(
-      { message: "Failed to save nutrition plan" },
+      { message: sanitizedMessage },
       { status: 500 }
     );
   }
