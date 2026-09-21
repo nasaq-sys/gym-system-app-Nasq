@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     }
 
     const meals = Array.isArray(body.meals) ? body.meals : [];
-    const mealFields = formatFieldsForSave(meals);
+    const mealFields = formatFieldsForSave(meals, { isTemplate: true });
 
     const fieldsToCreate: Record<string, unknown> = {
       [NUTRITION_TEMPLATE_FIELDS.NAME]: body.name.trim(),

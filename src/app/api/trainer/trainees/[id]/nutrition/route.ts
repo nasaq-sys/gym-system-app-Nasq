@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { verifyApiRequest } from "@/lib/serverAuth";
 import {
   getRecords,
+  getRecordById,
   createRecord,
   updateRecord,
 } from "@/lib/airtable";
 import {
   TABLES,
+  MEMBER_FIELDS,
   NUTRITION_PLAN_FIELDS,
   NUTRITION_TEMPLATE_FIELDS,
 } from "@/lib/constants";
@@ -35,14 +37,17 @@ export async function GET(
       );
     }
 
-    const [plans, templates] = await Promise.all([
+    const [plans, templates, memberRecord] = await Promise.all([
       getRecords(TABLES.NUTRITION_PLANS, { revalidate: 0 }),
       getRecords(TABLES.NUTRITION_TEMPLATES, { revalidate: 0 }),
+      getRecordById(TABLES.MEMBERS, traineeId),
     ]);
+
+    const linkedPlanIds = (memberRecord.fields[MEMBER_FIELDS.NUTRITION_PLANS] || []) as string[];
 
     const myPlan = plans.find((p) => {
       const members = p.fields[NUTRITION_PLAN_FIELDS.MEMBERS] as string[] | undefined;
-      return Array.isArray(members) && members.includes(traineeId);
+      return (Array.isArray(members) && members.includes(traineeId)) || linkedPlanIds.includes(p.id);
     });
 
     const normalizePlan = (p: { id: string; fields: Record<string, unknown> }) => ({
@@ -107,7 +112,7 @@ export async function POST(
     }
 
     const meals = Array.isArray(body.meals) ? body.meals : [];
-    const mealFields = formatFieldsForSave(meals);
+    const mealFields = formatFieldsForSave(meals, { isTemplate: false });
 
     const fieldsToSave: Record<string, unknown> = {
       [NUTRITION_PLAN_FIELDS.CALORIES]: Number(body.calories) || 0,
@@ -118,11 +123,17 @@ export async function POST(
       ...mealFields,
     };
 
-    // Check if member already has a nutrition plan
-    const allPlans = await getRecords(TABLES.NUTRITION_PLANS);
+    // Check if member already has a nutrition plan (both via plan.المتدربين and member.جدول التغذية)
+    const [allPlans, memberRecord] = await Promise.all([
+      getRecords(TABLES.NUTRITION_PLANS),
+      getRecordById(TABLES.MEMBERS, traineeId),
+    ]);
+
+    const linkedPlanIds = (memberRecord.fields[MEMBER_FIELDS.NUTRITION_PLANS] || []) as string[];
+
     const existingPlan = allPlans.find((p) => {
       const members = p.fields[NUTRITION_PLAN_FIELDS.MEMBERS] as string[] | undefined;
-      return Array.isArray(members) && members.includes(traineeId);
+      return (Array.isArray(members) && members.includes(traineeId)) || linkedPlanIds.includes(p.id);
     });
 
     let savedRecordId = "";
@@ -131,8 +142,23 @@ export async function POST(
       savedRecordId = existingPlan.id;
     } else {
       fieldsToSave[NUTRITION_PLAN_FIELDS.MEMBERS] = [traineeId];
+      fieldsToSave[NUTRITION_PLAN_FIELDS.STATUS] = "نشطة";
       const created = await createRecord(TABLES.NUTRITION_PLANS, fieldsToSave);
       savedRecordId = created.id;
+
+      // Ensure member record also links to this nutrition plan
+      try {
+        const currentLinks = Array.isArray(memberRecord.fields[MEMBER_FIELDS.NUTRITION_PLANS])
+          ? (memberRecord.fields[MEMBER_FIELDS.NUTRITION_PLANS] as string[])
+          : [];
+        if (!currentLinks.includes(savedRecordId)) {
+          await updateRecord(TABLES.MEMBERS, traineeId, {
+            [MEMBER_FIELDS.NUTRITION_PLANS]: [...currentLinks, savedRecordId],
+          });
+        }
+      } catch (linkErr) {
+        console.warn("Failed to link nutrition plan on member record:", linkErr);
+      }
     }
 
     // Invalidate member's nutrition cache

@@ -65,11 +65,12 @@ export function extractMealsFromFields(fields: Record<string, unknown>): MealEnt
 }
 
 export function formatFieldsForSave(
-  meals: { id?: string; name?: string; content?: string; key?: string }[]
+  meals: { id?: string; name?: string; content?: string; key?: string }[],
+  options?: { isTemplate?: boolean }
 ): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
 
-  // Initialize all 6 meal columns
+  // Initialize all 6 standard meal columns
   STANDARD_MEAL_KEYS.forEach((cfg) => {
     fields[cfg.fieldKey] = "";
   });
@@ -83,17 +84,15 @@ export function formatFieldsForSave(
     }
   });
 
-  // Also populate legacy fields for backwards compatibility
-  if (meals[0]?.content) fields["وجبة الإفطار"] = meals[0].content;
-  if (meals[2]?.content) fields["وجبة الغداء"] = meals[2].content;
-  if (meals[4]?.content) fields["وجبة العشاء"] = meals[4].content;
-
-  // Also save human-readable summary in "تفاصيل الوجبات"
-  const formattedSummary = meals
-    .filter((m) => Boolean(m.content && m.content.trim()))
-    .map((m) => `${m.name || "وجبة"}: ${(m.content || "").trim()}`)
-    .join("\n");
-  fields["تفاصيل الوجبات"] = formattedSummary || JSON.stringify(meals);
+  // Only templates table ("قوالب التغذية") has "تفاصيل الوجبات" in Airtable.
+  // The actual plans table ("جدول التغذية") does NOT have this column and rejects it with 422.
+  if (options?.isTemplate) {
+    const formattedSummary = meals
+      .filter((m) => Boolean(m.content && m.content.trim()))
+      .map((m) => `${m.name || "وجبة"}: ${(m.content || "").trim()}`)
+      .join("\n");
+    fields["تفاصيل الوجبات"] = formattedSummary || JSON.stringify(meals);
+  }
 
   return fields;
 }

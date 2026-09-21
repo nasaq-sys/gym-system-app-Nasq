@@ -30,6 +30,8 @@ import {
   Clock,
   Zap,
   Undo2,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/hooks/useI18n";
@@ -304,6 +306,8 @@ export default function TraineeSchedulePage() {
   const [showNutritionTemplateModal, setShowNutritionTemplateModal] = useState(false);
   const [nutritionSaving, setNutritionSaving] = useState(false);
   const [nutritionSavedMsg, setNutritionSavedMsg] = useState(false);
+  const [applyingNutrTemplateId, setApplyingNutrTemplateId] = useState<string | null>(null);
+  const [nutrErrorMsg, setNutrErrorMsg] = useState<string | null>(null);
   const [nutritionForm, setNutritionForm] = useState({
     calories: "2200",
     protein: "150",
@@ -647,6 +651,7 @@ export default function TraineeSchedulePage() {
   const handleSaveNutrition = async () => {
     if (!traineeId || nutritionSaving) return;
     setNutritionSaving(true);
+    setNutrErrorMsg(null);
     try {
       const res = await fetch(`/api/trainer/trainees/${traineeId}/nutrition`, {
         method: "POST",
@@ -668,7 +673,14 @@ export default function TraineeSchedulePage() {
         setNutritionSavedMsg(true);
         window.setTimeout(() => setNutritionSavedMsg(false), 3000);
         fetchNutrition();
+      } else {
+        const errJson = await res.json().catch(() => null);
+        setNutrErrorMsg(errJson?.message || (isAr ? "فشل حفظ الخطة الغذائية" : "Failed to save nutrition plan"));
+        window.setTimeout(() => setNutrErrorMsg(null), 4000);
       }
+    } catch {
+      setNutrErrorMsg(isAr ? "تعذر الاتصال بالخادم لحفظ الخطة" : "Failed to connect to server");
+      window.setTimeout(() => setNutrErrorMsg(null), 4000);
     } finally {
       setNutritionSaving(false);
     }
@@ -688,6 +700,8 @@ export default function TraineeSchedulePage() {
     // Instant save applied template
     if (!traineeId) return;
     setNutritionSaving(true);
+    setApplyingNutrTemplateId(t.id);
+    setNutrErrorMsg(null);
     try {
       const res = await fetch(`/api/trainer/trainees/${traineeId}/nutrition`, {
         method: "POST",
@@ -707,9 +721,17 @@ export default function TraineeSchedulePage() {
         setNutritionSavedMsg(true);
         window.setTimeout(() => setNutritionSavedMsg(false), 3000);
         fetchNutrition();
+      } else {
+        const errJson = await res.json().catch(() => null);
+        setNutrErrorMsg(errJson?.message || (isAr ? "فشل تطبيق القالب الغذائي" : "Failed to apply nutrition template"));
+        window.setTimeout(() => setNutrErrorMsg(null), 4000);
       }
+    } catch {
+      setNutrErrorMsg(isAr ? "تعذر الاتصال بالخادم لتطبيق القالب" : "Connection error while applying template");
+      window.setTimeout(() => setNutrErrorMsg(null), 4000);
     } finally {
       setNutritionSaving(false);
+      setApplyingNutrTemplateId(null);
     }
   };
 
@@ -1440,30 +1462,48 @@ export default function TraineeSchedulePage() {
                     </button>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5 space-y-2 overscroll-contain">
+                  <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5 space-y-2.5 overscroll-contain">
+                    {nutrErrorMsg && (
+                      <div className="bg-destructive/15 border border-destructive/30 rounded-2xl p-3.5 flex items-center gap-2.5 animate-fade-in">
+                        <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
+                        <span className="text-xs font-bold text-destructive">
+                          {nutrErrorMsg}
+                        </span>
+                      </div>
+                    )}
                     {nutritionTemplates.length === 0 ? (
                       <p className="text-xs text-foreground/70 text-center py-12">
                         {isAr ? "لا توجد قوالب غذائية محفوظة — يمكنك إنشاؤها من صفحة «الخطط الجاهزة»" : "No saved nutrition templates"}
                       </p>
                     ) : (
-                      nutritionTemplates.map((tpl) => (
-                        <button
-                          key={tpl.id}
-                          onClick={() => handleApplyNutritionTemplate(tpl)}
-                          disabled={nutritionSaving}
-                          className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-background border border-border/80 hover:border-accent text-start transition-all cursor-pointer disabled:opacity-60 group"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-foreground truncate group-hover:text-accent transition-colors">{tpl.name}</p>
-                            <p className="text-3xs text-foreground/70 mt-0.5">
-                              {tpl.calories} kcal · {tpl.goal || "تغذية متوازنة"}
-                            </p>
-                          </div>
-                          <span className="text-xs font-bold text-accent shrink-0">
-                            {isAr ? "تطبيق الخطة ←" : "Apply →"}
-                          </span>
-                        </button>
-                      ))
+                      nutritionTemplates.map((tpl) => {
+                        const isApplying = applyingNutrTemplateId === tpl.id;
+                        return (
+                          <button
+                            key={tpl.id}
+                            onClick={() => handleApplyNutritionTemplate(tpl)}
+                            disabled={nutritionSaving}
+                            className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-background border border-border/80 hover:border-accent text-start transition-all cursor-pointer disabled:opacity-60 group"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-foreground truncate group-hover:text-accent transition-colors">{tpl.name}</p>
+                              <p className="text-3xs text-foreground/70 mt-0.5">
+                                {tpl.calories} kcal · {tpl.goal || "تغذية متوازنة"}
+                              </p>
+                            </div>
+                            <span className="text-xs font-bold text-accent shrink-0 flex items-center gap-1.5">
+                              {isApplying ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  <span>{isAr ? "جاري التطبيق..." : "Applying..."}</span>
+                                </>
+                              ) : (
+                                <span>{isAr ? "تطبيق الخطة ←" : "Apply →"}</span>
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })
                     )}
                   </div>
 

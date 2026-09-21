@@ -33,7 +33,7 @@ export async function PATCH(
     if (body.fat !== undefined) fieldsToUpdate[NUTRITION_TEMPLATE_FIELDS.FAT] = Number(body.fat) || 0;
 
     if (Array.isArray(body.meals)) {
-      const mealFields = formatFieldsForSave(body.meals);
+      const mealFields = formatFieldsForSave(body.meals, { isTemplate: true });
       Object.assign(fieldsToUpdate, mealFields);
     }
 

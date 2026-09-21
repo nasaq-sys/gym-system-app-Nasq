@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyApiRequest } from "@/lib/serverAuth";
 import { getRecords, getRecordById } from "@/lib/airtable";
-import { TABLES, NUTRITION_PLAN_FIELDS, NUTRITION_TEMPLATE_FIELDS } from "@/lib/constants";
+import { TABLES, MEMBER_FIELDS, NUTRITION_PLAN_FIELDS, NUTRITION_TEMPLATE_FIELDS } from "@/lib/constants";
 import { withCacheSWR } from "@/lib/cacheService";
 import { extractMealsFromFields } from "@/lib/nutritionParser";
 
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       cacheKey,
       async () => {
         const memberRecord = await getRecordById(TABLES.MEMBERS, user.recordId);
-        const linkedPlanIds = (memberRecord.fields[NUTRITION_PLAN_FIELDS.MEMBERS] ||
+        const linkedPlanIds = (memberRecord.fields[MEMBER_FIELDS.NUTRITION_PLANS] ||
           []) as string[];
 
         const [plans, templates] = await Promise.all([
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
         const myPlan = plans.find((p) =>
           (p.fields[NUTRITION_PLAN_FIELDS.MEMBERS] as string[])?.includes(
             user.recordId
-          )
+          ) || linkedPlanIds.includes(p.id)
         );
 
         const normalize = (p: { id: string; fields: Record<string, unknown> }) => ({
