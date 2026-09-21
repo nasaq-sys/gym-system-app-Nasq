@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ── Standard ShadCN Theme Tokens ───────────────────────────────────────────
-   Dark is default for Ultra Gym brand (#E8622C orange accent, obsidian surfaces).
+   Dark is default for Nasaq Gym brand (royal electric blue accent, obsidian surfaces).
    :root holds the light-theme values (applied whenever html doesn't have the
    `.dark` class, i.e. when ThemeProvider sets `.light`). --background carries
    a faint warm tint and --card stays pure white so cards visibly sit above

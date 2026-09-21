@@ -80,11 +80,11 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Nasaq Gym" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=2" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=2" />
-        <link rel="shortcut icon" type="image/png" href="/icon-192.png?v=2" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
-        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=nasq_3" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=nasq_3" />
+        <link rel="shortcut icon" type="image/png" href="/icon-192.png?v=nasq_3" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=nasq_3" />
+        <link rel="manifest" href="/manifest.webmanifest?v=nasq_3" />
 
         <Script id="theme-init" strategy="beforeInteractive">
           {`try{var t=localStorage.getItem("gojim_theme")||"dark";var isLight=t==="light"||(t==="system"&&window.matchMedia&&!window.matchMedia("(prefers-color-scheme: dark)").matches);if(isLight){document.documentElement.classList.add("light");document.documentElement.classList.remove("dark");}else{document.documentElement.classList.add("dark");document.documentElement.classList.remove("light");}}catch(e){}`}

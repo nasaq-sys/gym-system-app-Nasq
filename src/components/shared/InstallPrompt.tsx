@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/hooks/useI18n";
+import { NasaqIconMark } from "@/components/shared/BrandLogo";
 
 // Chrome/Edge/Android beforeinstallprompt event interface
 interface BeforeInstallPromptEvent extends Event {
@@ -249,8 +250,8 @@ export default function InstallPrompt() {
         <div className="relative z-10 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {/* Icon Container with Glass Border */}
-            <div className="w-12 h-12 rounded-2xl border border-blue-400/40 bg-blue-500/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
-              <Smartphone className="w-6 h-6 text-white" />
+            <div className="shrink-0 shadow-lg shadow-blue-500/20">
+              <NasaqIconMark className="w-12 h-12 rounded-2xl" />
             </div>
 
             <div className="min-w-0">

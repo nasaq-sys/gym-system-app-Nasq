@@ -5,55 +5,64 @@ import { usePathname } from "next/navigation";
 import { useMemberGender } from "@/hooks/useMemberGender";
 
 /**
- * Dynamically updates the browser tab icon (favicon / apple-touch-icon)
- * based on the authenticated member's gender (female vs male).
- * Re-applies icon on every pathname transition to prevent Next.js router
- * from resetting the head links back to server defaults.
+ * Ensures browser tab icon and PWA assets always reflect the authentic
+ * Nasaq Gym branding. Prevents stale icon caching across navigation transitions.
  */
 export default function DynamicFavicon() {
   const { isFemale } = useMemberGender();
   const pathname = usePathname();
 
   useEffect(() => {
-    const iconPath = isFemale
-      ? "/icons/badge-female-monochrome.png?v=fb_7"
-      : "/icons/badge-monochrome.png?v=mb_7";
+    const faviconPath = isFemale
+      ? "/icon-female-192.png?v=nasq_2"
+      : "/icon-192.png?v=nasq_2";
 
     const updateFavicon = () => {
-      let dynamicLink = document.getElementById("dynamic-favicon") as HTMLLinkElement | null;
-      if (dynamicLink && (dynamicLink.href === iconPath || dynamicLink.href.endsWith(iconPath))) {
-        return;
-      }
+      try {
+        let dynamicLink = document.getElementById("dynamic-favicon") as HTMLLinkElement | null;
+        if (dynamicLink && (dynamicLink.href === faviconPath || dynamicLink.href.endsWith(faviconPath))) {
+          return;
+        }
 
-      // 1. Update all existing icon link tags in document head
-      const links = document.querySelectorAll<HTMLLinkElement>(
-        "link[rel*='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']"
-      );
+        // Update favicon links without touching apple-touch-icon
+        const faviconLinks = document.querySelectorAll<HTMLLinkElement>(
+          "link[rel='icon'], link[rel='shortcut icon']"
+        );
 
-      if (links.length > 0) {
-        links.forEach((link) => {
-          if (link.href !== iconPath && !link.href.endsWith(iconPath)) {
-            link.href = iconPath;
+        if (faviconLinks.length > 0) {
+          faviconLinks.forEach((link) => {
+            if (link.href !== faviconPath && !link.href.endsWith(faviconPath)) {
+              link.href = faviconPath;
+            }
+          });
+        }
+
+        // Ensure apple-touch-icon is consistently pointing to valid high-res icon
+        const appleTouchLinks = document.querySelectorAll<HTMLLinkElement>(
+          "link[rel='apple-touch-icon']"
+        );
+        appleTouchLinks.forEach((link) => {
+          const applePath = "/apple-touch-icon.png?v=nasq_2";
+          if (!link.href.endsWith(applePath)) {
+            link.href = applePath;
           }
         });
-      }
 
-      // 2. Ensure dynamic-favicon link exists
-      if (!dynamicLink) {
-        dynamicLink = document.createElement("link");
-        dynamicLink.id = "dynamic-favicon";
-        dynamicLink.rel = "icon";
-        dynamicLink.type = "image/png";
-        document.head.appendChild(dynamicLink);
-      }
-      if (dynamicLink.href !== iconPath) {
-        dynamicLink.href = iconPath;
-      }
+        // Ensure dynamic-favicon link exists
+        if (!dynamicLink) {
+          dynamicLink = document.createElement("link");
+          dynamicLink.id = "dynamic-favicon";
+          dynamicLink.rel = "icon";
+          dynamicLink.type = "image/png";
+          document.head.appendChild(dynamicLink);
+        }
+        if (dynamicLink.href !== faviconPath) {
+          dynamicLink.href = faviconPath;
+        }
+      } catch {}
     };
 
     updateFavicon();
-
-    // Small timeout to catch post-hydration Next.js head reconciliation
     const timer = setTimeout(updateFavicon, 150);
     return () => clearTimeout(timer);
   }, [isFemale, pathname]);

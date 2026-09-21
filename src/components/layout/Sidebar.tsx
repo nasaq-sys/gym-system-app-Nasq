@@ -25,6 +25,7 @@ import LanguageSwitch from "@/components/shared/LanguageSwitch";
 import ThemeSwitch from "@/components/shared/ThemeSwitch";
 import { useMemberGender } from "@/hooks/useMemberGender";
 import { useGymWhatsApp } from "@/hooks/useGymWhatsApp";
+import BrandLogo from "@/components/shared/BrandLogo";
 
 const NAV_ITEMS = [
   { key: "home", href: "/home", icon: LayoutDashboard },
@@ -61,11 +62,10 @@ export default function Sidebar({ restricted = false }: { restricted?: boolean }
   return (
     <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 bg-sidebar border-l border-sidebar-border p-4 gap-2 text-sidebar-foreground">
       {/* Brand */}
-      <div className="flex items-center px-3 py-4 mb-4">
-        <span className="text-xl font-black tracking-tight">
-          <span className="text-sidebar-foreground">Nasaq </span>
-          <span className="text-sidebar-primary">Gym</span>
-        </span>
+      <div className="flex items-center px-2 py-3 mb-3">
+        <Link href="/home" className="hover:opacity-90 transition-opacity">
+          <BrandLogo size="md" showSubtext subtext="نسق جيم الرياضي" />
+        </Link>
       </div>
 
       {/* Nav Items */}

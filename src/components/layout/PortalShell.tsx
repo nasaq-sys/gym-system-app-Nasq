@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import BrandLogo from "@/components/shared/BrandLogo";
 
 export interface PortalNavItem {
   href: string;
@@ -171,11 +172,8 @@ export default function PortalShell({
     <div className="min-h-screen bg-background flex">
       {/* 💻 Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 bg-sidebar border-l border-sidebar-border p-4 gap-2 text-sidebar-foreground">
-        <div className="flex items-center px-3 py-4 mb-2">
-          <span className="text-xl font-black text-sidebar-foreground tracking-tight">
-            <span className="text-sidebar-foreground">Nasaq </span>
-            <span className="text-sidebar-primary">Gym</span>
-          </span>
+        <div className="flex items-center px-2 py-3 mb-2">
+          <BrandLogo size="md" showSubtext subtext={roleBadgeLabel} />
         </div>
 
         {/* User Card */}
@@ -303,15 +301,8 @@ export default function PortalShell({
                   <DrawerContent className="max-w-xs h-full inset-y-0 rounded-none border-y-0 flex flex-col p-0 bg-card text-foreground">
                     <DrawerHeader className="flex flex-row items-center justify-between px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] border-b border-border shrink-0">
                       <div className="flex items-center gap-2.5">
-                        <div>
-                          <DrawerTitle className="text-lg font-black tracking-tight">
-                            <span className="text-foreground">Nasaq </span>
-                            <span className="text-primary">Gym</span>
-                          </DrawerTitle>
-                          <span className="text-3xs font-extrabold text-foreground/70 uppercase tracking-wider block">
-                            {roleBadgeLabel}
-                          </span>
-                        </div>
+                        <DrawerTitle className="sr-only">Nasaq Gym</DrawerTitle>
+                        <BrandLogo size="sm" showSubtext subtext={roleBadgeLabel} />
                       </div>
                       <DrawerClose
                         className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "w-8 h-8 rounded-full cursor-pointer")}

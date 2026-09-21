@@ -47,7 +47,8 @@ export async function getMemberNotifications(
         .filter((r) => {
           const links = r.fields[NOTIFICATION_FIELDS.MEMBER];
           const linkedIds = Array.isArray(links) ? (links as string[]) : [];
-          return linkedIds.includes(memberRecordId);
+          // عرض الإشعارات العامة (بدون تخصيص متدرب محدد) أو المخصصة لهذا المتدرب
+          return linkedIds.length === 0 || linkedIds.includes(memberRecordId);
         })
         .map((r) => ({
           id: r.id,

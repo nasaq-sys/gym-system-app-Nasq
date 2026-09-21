@@ -13,11 +13,11 @@ export interface CapacitorConfig {
 
 const config: CapacitorConfig = {
   appId: "com.ultragym.app",
-  appName: "Ultra Gym",
+  appName: "Nasaq Gym",
   webDir: "public",
   server: {
     androidScheme: "https",
-    iosScheme: "ultragym",
+    iosScheme: "nasaqgym",
   },
   plugins: {
     WorkoutRestTimerPlugin: {

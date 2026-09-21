@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { FacebookIcon, InstagramIcon } from "@/components/shared/SocialIcons";
 import { useI18n } from "@/hooks/useI18n";
+import BrandLogo from "@/components/shared/BrandLogo";
 
 function LoginForm() {
   const router = useRouter();
@@ -120,14 +121,8 @@ function LoginForm() {
       <div className="w-full max-w-md animate-fade-up relative z-10">
         <div className="bg-card border border-border rounded-3xl p-7 sm:p-9 shadow-2xl space-y-6">
           {/* Brand */}
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-black tracking-tight">
-              <span className="text-foreground">Nasaq </span>
-              <span className="text-primary">Gym</span>
-            </h1>
-            <p className="text-xs font-semibold text-foreground/70">
-              {t("auth.loginSubtitle")}
-            </p>
+          <div className="flex flex-col items-center text-center space-y-2">
+            <BrandLogo size="lg" showSubtext subtext={t("auth.loginSubtitle")} />
           </div>
 
           {/* Form */}

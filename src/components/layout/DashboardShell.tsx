@@ -104,6 +104,15 @@ export default function DashboardShell({
             }
           } catch {}
 
+          // Ensure device push subscription is synchronized with current member account
+          try {
+            if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+              import("@/lib/pushClient").then(({ resyncPushSubscription }) => {
+                resyncPushSubscription().catch(() => {});
+              }).catch(() => {});
+            }
+          } catch {}
+
           // Member portal — check live authoritative subscription status from /api/members
           clientFetch<any>("/api/members", undefined, { ttlMs: 30000 })
             .then((memberRes) => {

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-const SESSION_DISMISS_KEY = "ultra_gym_notif_optin_dismissed_session";
+const SESSION_DISMISS_KEY = "nasq_notif_optin_dismissed_session";
 
 export default function NotificationOptInModal() {
   const [visible, setVisible] = useState(false);

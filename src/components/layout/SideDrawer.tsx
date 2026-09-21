@@ -27,6 +27,7 @@ import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "@/components/shared/S
 import FeedbackDialog from "@/components/shared/FeedbackDialog";
 import LanguageSwitch from "@/components/shared/LanguageSwitch";
 import ThemeSwitch from "@/components/shared/ThemeSwitch";
+import BrandLogo from "@/components/shared/BrandLogo";
 import { useGymWhatsApp } from "@/hooks/useGymWhatsApp";
 import { clientFetch, getClientCachedData } from "@/lib/clientCache";
 import {
@@ -139,10 +140,8 @@ export default function SideDrawer({ restricted = false }: { restricted?: boolea
           {/* Header */}
           <DrawerHeader className="flex flex-row items-center justify-between px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] border-b border-border shrink-0">
             <div className="flex items-center gap-2.5">
-              <DrawerTitle className="text-base font-bold tracking-tight">
-                <span className="text-foreground">Nasaq </span>
-                <span className="text-primary">Gym</span>
-              </DrawerTitle>
+              <DrawerTitle className="sr-only">Nasaq Gym</DrawerTitle>
+              <BrandLogo size="sm" showSubtext subtext="نسق جيم الرياضي" />
             </div>
             <DrawerClose
               className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "w-8 h-8 rounded-full text-foreground/70 hover:text-foreground cursor-pointer")}

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
+  BellRing,
   CheckCheck,
   Megaphone,
   CreditCard,
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/popover";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { isPushSupported, subscribeToPush } from "@/lib/pushClient";
 
 export interface MemberNotification {
   id: string;
@@ -64,6 +66,24 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<MemberNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [markingAll, setMarkingAll] = useState(false);
+  const [pushPermission, setPushPermission] = useState<string>("default");
+  const [enablingPush, setEnablingPush] = useState(false);
+
+  const checkPushState = useCallback(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPushPermission(Notification.permission);
+    }
+  }, []);
+
+  const handleEnablePush = async () => {
+    setEnablingPush(true);
+    try {
+      await subscribeToPush();
+      checkPushState();
+    } finally {
+      setEnablingPush(false);
+    }
+  };
 
   const fetchNotifications = useCallback(async () => {
     if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
@@ -91,21 +111,24 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications();
+    checkPushState();
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         fetchNotifications();
+        checkPushState();
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    const interval = setInterval(fetchNotifications, 120000); // Poll every 2 minutes when active
+    // Real-time polling every 35s while app is actively open
+    const interval = setInterval(fetchNotifications, 35000);
 
     return () => {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [fetchNotifications]);
+  }, [fetchNotifications, checkPushState]);
 
   const markAsRead = async (id: string, actionUrl?: string) => {
     setNotifications((prev) =>
@@ -206,6 +229,24 @@ export default function NotificationBell() {
             </Button>
           )}
         </div>
+
+        {/* Opt-in banner if push not granted */}
+        {pushPermission === "default" && (
+          <div className="p-2.5 mx-3 mt-2.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 text-primary font-bold text-2xs sm:text-xs">
+              <BellRing className="w-3.5 h-3.5 shrink-0 animate-pulse" />
+              <span>{isAr ? "تفعيل إشعارات الهاتف" : "Enable push alerts"}</span>
+            </div>
+            <Button
+              size="sm"
+              className="h-6 text-3xs px-2.5"
+              onClick={handleEnablePush}
+              disabled={enablingPush}
+            >
+              {enablingPush ? (isAr ? "جاري..." : "Enabling...") : (isAr ? "تفعيل" : "Enable")}
+            </Button>
+          </div>
+        )}
 
         {/* List */}
         <div className="max-h-[380px] overflow-y-auto divide-y divide-border/60">
