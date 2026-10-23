@@ -15,7 +15,6 @@ import { TABLES, MEMBER_FIELDS, TRAINER_FIELDS, STAFF_FIELDS } from "@/lib/const
 import { getFromRedis, setInRedis, type CachedUserData } from "@/lib/redisClient";
 import { triggerRedisErrorAlert } from "@/lib/alerts";
 import { checkRateLimit, createRateLimitResponse } from "@/lib/rateLimit";
-import { claimMemberDevice } from "@/lib/memberDevice";
 
 // ── IP Tracking — Table IDs & Field IDs ──────────────────────────────────
 // Maps session roles to the correct Airtable table/field for storing the
@@ -114,17 +113,6 @@ async function verifyStoredPassword(
   if (storedPassword === "") return false;
 
   return password === storedPassword;
-}
-
-async function checkMemberDevice(role: SessionRole, recordId: string, proof: unknown) {
-  if (role !== "member") return { fingerprint: undefined, response: null };
-  const result = await claimMemberDevice(recordId, proof);
-  if (result.status === "ok") return { fingerprint: result.fingerprint, response: null };
-  const status = result.status === "unavailable" ? 503 : result.status === "locked" ? 403 : 400;
-  return {
-    fingerprint: undefined,
-    response: NextResponse.json({ error: `device_${result.status}` }, { status }),
-  };
 }
 
 async function findByIdentifier(
@@ -275,16 +263,12 @@ export async function POST(request: Request) {
       }
 
       if (isMatch) {
-        const device = await checkMemberDevice(cachedUser.role, cachedUser.id, body?.deviceProof);
-        if (device.response) return device.response;
-
         const sessionPayload: SessionPayload = {
           memberId: cachedUser.memberId,
           email: cachedUser.email,
           name: cachedUser.name,
           recordId: cachedUser.id,
           role: cachedUser.role,
-          deviceKeyHash: device.fingerprint,
           altRole: cachedUser.altRole,
           altRecordId: cachedUser.altRecordId,
           altMemberId: cachedUser.altMemberId,
@@ -349,9 +333,6 @@ export async function POST(request: Request) {
     if (!role || !record || !matchedCandidate) {
       return genericError();
     }
-
-    const device = await checkMemberDevice(role, record.id, body?.deviceProof);
-    if (device.response) return device.response;
 
     let name = "";
     let idValue = "";
@@ -460,7 +441,6 @@ export async function POST(request: Request) {
       name,
       recordId: record.id,
       role,
-      deviceKeyHash: device.fingerprint,
       altRole,
       altRecordId,
       altMemberId,

@@ -33,7 +33,6 @@ interface TokenPayload {
   email?: string;
   role?: string;
   recordId?: string;
-  deviceKeyHash?: string;
   exp?: number;
 }
 
@@ -344,8 +343,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   // ── Extract User Session from JWT in Cookies ──────────────────────────
   const token = request.cookies.get("token")?.value || request.cookies.get("gojim_session")?.value;
   const decodedSession = extractSessionFromToken(token);
-  const session = decodedSession?.role === "member" && !decodedSession.deviceKeyHash
-    ? null : decodedSession;
+  const session = decodedSession;
   const userEmail = session?.email || "Guest";
   const userRole = session?.role || "guest";
 
