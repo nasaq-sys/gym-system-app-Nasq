@@ -141,6 +141,7 @@
     "gymCapacity": "Gym Capacity",
     "liveSensors": "Smart Gate Live Sensors",
     "nowInGym": "In the gym right now",
+    "showEntryQr": "Show entry QR code",
     "inGymHint": "Members currently inside the gym",
     "stats": {
       "balance": "Remaining balance",

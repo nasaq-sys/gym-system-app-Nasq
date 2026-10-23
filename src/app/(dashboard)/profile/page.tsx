@@ -33,7 +33,6 @@ import { useGymWhatsApp } from "@/hooks/useGymWhatsApp";
 import { WhatsAppIcon } from "@/components/shared/SocialIcons";
 import { clientFetch, getClientCachedData } from "@/lib/clientCache";
 import { Skeleton } from "@/components/ui/skeleton";
-import MemberQrPass from "@/components/shared/MemberQrPass";
 
 
 interface ProfileItem {
@@ -340,8 +339,6 @@ export default function ProfilePage() {
           </Button>
         </div>
       )}
-
-      {member.recordId && <MemberQrPass />}
 
       {/* ── 2. TWO-COLUMN DETAILS GRID (Membership First, then Health Stats) ── */}
       <div className="grid md:grid-cols-2 gap-5">

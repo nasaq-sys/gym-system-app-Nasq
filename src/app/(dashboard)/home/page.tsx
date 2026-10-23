@@ -7,11 +7,13 @@ import { useI18n } from "@/hooks/useI18n";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import BodyFatGauge from "@/components/shared/BodyFatGauge";
 import AttendanceCalendar from "@/components/shared/AttendanceCalendar";
 import NextBookingCard from "@/components/shared/NextBookingCard";
 import DaysRing from "@/components/shared/DaysRing";
 import HomeSkeleton from "@/components/shared/HomeSkeleton";
+import MemberQrPass from "@/components/shared/MemberQrPass";
 import {
   User,
   TrendingUp,
@@ -28,6 +30,7 @@ import {
   Flame,
   Award,
   CreditCard,
+  QrCode,
 } from "lucide-react";
 import RenewSubscriptionModal from "@/components/shared/RenewSubscriptionModal";
 import { cn } from "@/lib/utils";
@@ -162,6 +165,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(() => !getClientCachedData("/api/members"));
   const [currentTip] = useState<DailyTip>(() => getDailyTip());
   const [renewModalOpen, setRenewModalOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
 
   const fetchGymCount = useCallback(() => {
     if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
@@ -287,6 +291,10 @@ export default function HomePage() {
     : null;
 
   const occupancy = getOccupancyLabel(gymCount, isAr);
+  const showEntryQrTranslation = t("home.showEntryQr");
+  const showEntryQrLabel = showEntryQrTranslation === "home.showEntryQr"
+    ? (isAr ? "إظهار رمز الدخول QR" : "Show entry QR code")
+    : showEntryQrTranslation;
 
   return (
     <div className="pb-12">
@@ -345,28 +353,39 @@ export default function HomePage() {
           </div>
         </div>
 
-        <Card className="p-4 flex items-center justify-between gap-3 shadow-sm bg-gradient-to-br from-primary/10 via-card to-card border-primary/20">
-          <div className="flex items-center gap-2 min-w-0">
-            <Badge variant="outline" className="gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-bold text-xs shrink-0">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+        <Card className="p-4 gap-4 shadow-sm bg-gradient-to-br from-primary/10 via-card to-card border-primary/20">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Badge variant="outline" className="gap-1.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-bold text-xs shrink-0">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                </span>
+                <span>{t("home.liveTag")}</span>
+              </Badge>
+              <span className="text-xs font-bold text-foreground truncate">
+                {t("home.nowInGym")}
               </span>
-              <span>{t("home.liveTag")}</span>
-            </Badge>
-            <span className="text-xs font-bold text-foreground truncate">
-              {t("home.nowInGym")}
-            </span>
-          </div>
+            </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <span className={cn("text-2xs font-semibold", occupancy.color)}>
-              {occupancy.text}
-            </span>
-            <span className="text-3xl font-black leading-none text-primary tabular-nums">
-              {gymCount != null ? gymCount : "---"}
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className={cn("text-2xs font-semibold", occupancy.color)}>
+                {occupancy.text}
+              </span>
+              <span className="text-3xl font-black leading-none text-primary tabular-nums">
+                {gymCount != null ? gymCount : "---"}
+              </span>
+            </div>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setQrOpen(true)}
+            className="w-full min-h-12 gap-2 rounded-xl border-primary/30 bg-card-hover/50 text-sm font-bold text-foreground hover:bg-primary/10"
+          >
+            <QrCode className="size-5 text-primary" aria-hidden="true" />
+            {showEntryQrLabel}
+          </Button>
         </Card>
 
         <BodyFatGauge
@@ -575,6 +594,15 @@ export default function HomePage() {
             </div>
           </div>
 
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setQrOpen(true)}
+            className="w-full min-h-11 gap-2 rounded-xl border-primary/30 bg-card-hover/50 font-bold text-foreground hover:bg-primary/10"
+          >
+            <QrCode className="size-4 text-primary" aria-hidden="true" />
+            {showEntryQrLabel}
+          </Button>
           <div className="flex items-center gap-1.5 text-2xs text-foreground/70 pt-2 border-t border-border/60">
             <Users className="w-3.5 h-3.5 text-primary" />
             <span>{t("home.liveSensors")}</span>
@@ -813,6 +841,13 @@ export default function HomePage() {
         currentPlanName={Array.isArray(member?.planType) ? member?.planType[0] : member?.planType}
         currentSubEndDate={Array.isArray(member?.subEndDate) ? member?.subEndDate[0] : member?.subEndDate}
       />
+      <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[calc(100%-1rem)] overflow-y-auto border-border bg-card p-2 pt-12 sm:max-w-lg sm:p-5">
+          <DialogTitle className="sr-only">{t("profile.qrTitle")}</DialogTitle>
+          <DialogDescription className="sr-only">{t("profile.qrInstructions")}</DialogDescription>
+          {qrOpen && <MemberQrPass />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
