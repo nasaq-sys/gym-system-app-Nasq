@@ -11,6 +11,7 @@ import PerformanceDiagnostics from "@/components/shared/PerformanceDiagnostics";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import DynamicFavicon from "@/components/shared/DynamicFavicon";
+import CopyProtection from "@/components/shared/CopyProtection";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -97,6 +98,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <I18nProvider initialLocale={locale}>
             <TooltipProvider>
+              <CopyProtection />
               <DynamicFavicon />
               <InstallPrompt />
               <NotificationOptInModal />

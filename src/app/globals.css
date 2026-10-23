@@ -210,6 +210,22 @@ html.theme-ready body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+body,
+body * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none;
+}
+
+input:not([readonly]):not([disabled]),
+textarea:not([readonly]):not([disabled]),
+[contenteditable]:not([contenteditable="false"]),
+[contenteditable]:not([contenteditable="false"]) * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default;
+}
+
 button,
 a,
 input,
