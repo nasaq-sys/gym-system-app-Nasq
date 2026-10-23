@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertCircle, QrCode, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertCircle, CheckCircle2, QrCode, RefreshCw } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
 import { encodeMemberQr } from "@/lib/memberQr";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,10 @@ export default function MemberQrPass() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [checkedIn, setCheckedIn] = useState(false);
+  const [statusError, setStatusError] = useState(false);
+  const [statusRetry, setStatusRetry] = useState(0);
+  const recentPasses = useRef<AttendancePass[]>([]);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     if (!signal?.aborted) setLoading(true);
@@ -33,6 +37,7 @@ export default function MemberQrPass() {
       const next = (await response.json()) as AttendancePass;
       if (!next.token || !Number.isFinite(next.expiresAt)) throw new Error("Invalid QR response");
       if (!signal?.aborted) {
+        recentPasses.current = [next, ...recentPasses.current.filter((item) => item.token !== next.token && item.expiresAt + 60 > Date.now() / 1000)].slice(0, 3);
         setPass(next);
         setError(false);
       }
@@ -47,6 +52,7 @@ export default function MemberQrPass() {
   }, []);
 
   useEffect(() => {
+    if (checkedIn) return;
     const controller = new AbortController();
     const initial = window.setTimeout(() => void refresh(controller.signal), 0);
     const clock = window.setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1_000);
@@ -60,25 +66,82 @@ export default function MemberQrPass() {
       window.clearInterval(clock);
       document.removeEventListener("visibilitychange", visible);
     };
-  }, [refresh]);
+  }, [refresh, checkedIn]);
 
   useEffect(() => {
-    if (!pass) return;
+    if (!pass || checkedIn) return;
     const delay = Math.max(0, pass.expiresAt * 1000 - Date.now() + 100);
     const timer = window.setTimeout(() => {
       if (!document.hidden) void refresh();
     }, delay);
     return () => window.clearTimeout(timer);
-  }, [pass, refresh]);
+  }, [pass, refresh, checkedIn]);
+
+  useEffect(() => {
+    if (!pass || checkedIn) return;
+    const controller = new AbortController();
+    let pending = false;
+    let failures = 0;
+    const poll = async () => {
+      if (document.hidden || pending || controller.signal.aborted) return;
+      pending = true;
+      try {
+        const tokens = recentPasses.current.filter((item) => item.expiresAt + 60 > Date.now() / 1000).map((item) => item.token);
+        if (!tokens.length) return;
+        const response = await fetch("/api/member-qr/status", {
+          method: "POST",
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tokens }),
+        });
+        if (!response.ok) throw new Error("Check-in status failed");
+        const result = (await response.json()) as { checkedIn: boolean };
+        failures = 0;
+        setStatusError(false);
+        if (result.checkedIn) {
+          setCheckedIn(true);
+          setPass(null);
+        }
+      } catch {
+        if (!controller.signal.aborted && ++failures >= 3) setStatusError(true);
+      } finally {
+        pending = false;
+      }
+    };
+    void poll();
+    const timer = window.setInterval(() => void poll(), 1_500);
+    const visible = () => { if (!document.hidden) void poll(); };
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      controller.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  }, [pass, checkedIn, statusRetry]);
 
   const matrix = useMemo(() => {
-    if (!pass || pass.expiresAt <= now) return null;
+    if (!pass) return null;
     try { return encodeMemberQr(pass.token); } catch { return null; }
-  }, [pass, now]);
+  }, [pass]);
   const path = useMemo(() => matrix?.flatMap((row, y) => row.flatMap((black, x) =>
     black ? [`M${x} ${y}h1v1h-1z`] : []
   )).join("") ?? "", [matrix]);
   const remaining = pass ? Math.max(0, pass.expiresAt - now) : 0;
+  const visibleMatrix = remaining > 0 && !checkedIn ? matrix : null;
+
+  if (checkedIn) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center gap-3 py-8 text-center" role="status" aria-live="polite">
+          <CheckCircle2 className="h-12 w-12 text-primary" aria-hidden="true" />
+          <h2 className="text-lg font-bold text-foreground">{t("profile.qrSuccessTitle")}</h2>
+          <p className="text-sm text-foreground/70">{t("profile.qrSuccessDescription")}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -89,8 +152,17 @@ export default function MemberQrPass() {
             {t("profile.qrTitle")}
           </h2>
           <p className="text-xs text-foreground/70">{t("profile.qrInstructions")}</p>
-          {matrix && <p className="text-xs font-semibold text-primary">{t("profile.qrRefreshIn")} {remaining} {t("profile.qrSeconds")}</p>}
-          {(error || (!loading && !matrix)) && (
+          {visibleMatrix && <p className="text-xs font-semibold text-primary">{t("profile.qrRefreshIn")} {remaining} {t("profile.qrSeconds")}</p>}
+          {statusError && (
+            <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-foreground/70 sm:justify-start" role="alert">
+              <AlertCircle className="h-4 w-4 text-destructive" aria-hidden="true" />
+              <span>{t("profile.qrStatusUnavailable")}</span>
+              <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={() => { setStatusError(false); setStatusRetry((value) => value + 1); }}>
+                <RefreshCw className="h-4 w-4" aria-hidden="true" /> {t("profile.qrRetry")}
+              </Button>
+            </div>
+          )}
+          {(error || (!loading && !visibleMatrix)) && (
             <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-foreground/70 sm:justify-start" role="status">
               <AlertCircle className="h-4 w-4 text-destructive" aria-hidden="true" />
               <span>{t("profile.qrUnavailable")}</span>
@@ -100,14 +172,14 @@ export default function MemberQrPass() {
             </div>
           )}
         </div>
-        {matrix ? (
-          <div className="shrink-0 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-border" dir="ltr">
-            <svg viewBox="0 0 65 65" className="block h-52 w-52 max-w-full sm:h-56 sm:w-56" shapeRendering="crispEdges" role="img" aria-label={t("profile.qrImageLabel")}>
-              <rect width="65" height="65" fill="white" />
+        {visibleMatrix ? (
+          <div className="w-full max-w-80 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-border sm:w-64 sm:shrink-0 lg:w-72" dir="ltr">
+            <svg viewBox="0 0 57 57" className="block aspect-square w-full" shapeRendering="crispEdges" role="img" aria-label={t("profile.qrImageLabel")}>
+              <rect width="57" height="57" fill="white" />
               <path d={path} fill="black" />
             </svg>
           </div>
-        ) : loading ? <Skeleton className="h-56 w-56 shrink-0 rounded-2xl" /> : null}
+        ) : loading ? <Skeleton className="h-72 w-full max-w-80 shrink-0 rounded-2xl sm:w-64" /> : null}
       </CardContent>
     </Card>
   );

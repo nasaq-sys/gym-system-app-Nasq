@@ -251,6 +251,9 @@
     "qrUnavailable": "The attendance code is unavailable. Check your connection and try again.",
     "qrRetry": "Try again",
     "qrImageLabel": "Your attendance QR code",
+    "qrSuccessTitle": "Check-in successful",
+    "qrSuccessDescription": "Reception has confirmed your attendance.",
+    "qrStatusUnavailable": "Could not confirm the scan right now. We will retry automatically.",
     "memberId": "Member ID",
     "qr": {
       "loadError": "Could not load your membership details. Try again.",

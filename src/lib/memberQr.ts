@@ -1,10 +1,10 @@
 /** Encodes the short signed attendance token as a self-contained QR Model 2 symbol.
- * Version 10, medium error correction, byte mode. No image service or QR package is used.
+ * Version 8, medium error correction, byte mode. No image service or QR package is used.
  */
-const SIZE = 57;
-const DATA_CODEWORDS = 216;
-const ECC_CODEWORDS = 26;
-const BLOCKS = 5;
+const SIZE = 49;
+const DATA_CODEWORDS = 154;
+const ECC_CODEWORDS = 22;
+const BLOCKS = 4;
 
 function multiply(a: number, b: number): number {
   let product = 0;
@@ -38,14 +38,14 @@ function errorCorrection(data: number[]): number[] {
 
 function encodeCodewords(value: string): number[] {
   const bytes = new TextEncoder().encode(value);
-  // Version 10-M has 216 data codewords, including 4 mode and 16 count bits.
-  if (bytes.length > 213) throw new RangeError("Attendance token exceeds QR capacity");
+  // Version 8-M has 154 data codewords, including 4 mode and 8 count bits.
+  if (bytes.length > 152) throw new RangeError("Attendance token exceeds QR capacity");
   const bits: number[] = [];
   const push = (number: number, count: number) => {
     for (let i = count - 1; i >= 0; i--) bits.push((number >>> i) & 1);
   };
   push(4, 4);
-  push(bytes.length, 16);
+  push(bytes.length, 8);
   bytes.forEach((byte) => push(byte, 8));
   push(0, Math.min(4, DATA_CODEWORDS * 8 - bits.length));
   while (bits.length % 8) bits.push(0);
@@ -58,13 +58,13 @@ function encodeCodewords(value: string): number[] {
   const groups: { data: number[]; ecc: number[] }[] = [];
   let offset = 0;
   for (let i = 0; i < BLOCKS; i++) {
-    const length = i === BLOCKS - 1 ? 44 : 43;
+    const length = i < 2 ? 38 : 39;
     const block = data.slice(offset, offset + length);
     groups.push({ data: block, ecc: errorCorrection(block) });
     offset += length;
   }
   const result: number[] = [];
-  for (let i = 0; i < 44; i++) for (const block of groups) if (i < block.data.length) result.push(block.data[i]);
+  for (let i = 0; i < 39; i++) for (const block of groups) if (i < block.data.length) result.push(block.data[i]);
   for (let i = 0; i < ECC_CODEWORDS; i++) for (const block of groups) result.push(block.ecc[i]);
   return result;
 }
@@ -88,8 +88,8 @@ export function encodeMemberQr(value: string): boolean[][] {
       set(cx + dx, cy + dy, distance !== 2 && distance !== 4);
     }
   }
-  for (const x of [6, 28, 50]) for (const y of [6, 28, 50]) {
-    if ((x === 6 && y === 6) || (x === 6 && y === 50) || (x === 50 && y === 6)) continue;
+  for (const x of [6, 24, 42]) for (const y of [6, 24, 42]) {
+    if ((x === 6 && y === 6) || (x === 6 && y === 42) || (x === 42 && y === 6)) continue;
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
       set(x + dx, y + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
     }
@@ -102,9 +102,9 @@ export function encodeMemberQr(value: string): boolean[][] {
   for (let i = 8; i < 15; i++) set(8, SIZE - 15 + i, false);
   set(8, SIZE - 8, true);
 
-  let versionRemainder = 10;
+  let versionRemainder = 8;
   for (let i = 0; i < 12; i++) versionRemainder = (versionRemainder << 1) ^ ((versionRemainder >>> 11) * 0x1f25);
-  const versionBits = (10 << 12) | versionRemainder;
+  const versionBits = (8 << 12) | versionRemainder;
   for (let i = 0; i < 18; i++) {
     const a = SIZE - 11 + i % 3;
     const b = Math.floor(i / 3);

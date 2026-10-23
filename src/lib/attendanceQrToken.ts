@@ -18,7 +18,7 @@ export function issueAttendanceQr(recordId: string, secret: string, nowMs = Date
 }
 
 /** Returns null for forged, malformed, early, expired or legacy 30-second passes. */
-export function verifyAttendanceQr(token: string, secret: string, nowMs = Date.now()): AttendanceQrPayload | null {
+export function verifyAttendanceQr(token: string, secret: string, nowMs = Date.now(), graceSeconds = 0): AttendanceQrPayload | null {
   const match = /^UG1\.([A-Za-z0-9_-]{20,300})\.([A-Za-z0-9_-]{43})$/.exec(token);
   if (!match) return null;
   const expected = createHmac("sha256", secret).update(match[1]).digest();
@@ -31,6 +31,6 @@ export function verifyAttendanceQr(token: string, secret: string, nowMs = Date.n
   if (!pass || pass.v !== 1 || !/^rec[A-Za-z0-9]+$/.test(pass.id) ||
       !Number.isInteger(pass.iat) || !Number.isInteger(pass.exp) ||
       pass.iat % 25 !== 0 || pass.exp !== pass.iat + 25 ||
-      now < pass.iat || now >= pass.exp) return null;
+      now < pass.iat || now >= pass.exp + graceSeconds) return null;
   return pass;
 }
