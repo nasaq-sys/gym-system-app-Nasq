@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import {
   getRecordsByFilter,
   getRecordById,
-  updateRecord,
   type AirtableRecord,
 } from "@/lib/airtable";
 import {
@@ -16,6 +15,7 @@ import { TABLES, MEMBER_FIELDS, TRAINER_FIELDS, STAFF_FIELDS } from "@/lib/const
 import { getFromRedis, setInRedis, type CachedUserData } from "@/lib/redisClient";
 import { triggerRedisErrorAlert } from "@/lib/alerts";
 import { checkRateLimit, createRateLimitResponse } from "@/lib/rateLimit";
+import { claimMemberDevice } from "@/lib/memberDevice";
 
 // ── IP Tracking — Table IDs & Field IDs ──────────────────────────────────
 // Maps session roles to the correct Airtable table/field for storing the
@@ -98,12 +98,8 @@ function genericError() {
   );
 }
 
-/**
- * Verifies `password` against the record's stored password field, migrating
- * a legacy plaintext password to a bcrypt hash on first successful login.
- */
-async function verifyAndMigrate(
-  table: string,
+/** Keep existing legacy hashes readable, but never transform Airtable plaintext passwords. */
+async function verifyStoredPassword(
   record: AirtableRecord,
   passwordField: string,
   password: string
@@ -117,17 +113,18 @@ async function verifyAndMigrate(
   }
   if (storedPassword === "") return false;
 
-  const valid = password === storedPassword;
-  if (valid) {
-    try {
-      const hash = await bcrypt.hash(storedPassword, 10);
-      record.fields[passwordField] = hash;
-      await updateRecord(table, record.id, { [passwordField]: hash });
-    } catch (error) {
-      console.error("Password hash migration failed:", error);
-    }
-  }
-  return valid;
+  return password === storedPassword;
+}
+
+async function checkMemberDevice(role: SessionRole, recordId: string, proof: unknown) {
+  if (role !== "member") return { fingerprint: undefined, response: null };
+  const result = await claimMemberDevice(recordId, proof);
+  if (result.status === "ok") return { fingerprint: result.fingerprint, response: null };
+  const status = result.status === "unavailable" ? 503 : result.status === "locked" ? 403 : 400;
+  return {
+    fingerprint: undefined,
+    response: NextResponse.json({ error: `device_${result.status}` }, { status }),
+  };
 }
 
 async function findByIdentifier(
@@ -278,19 +275,8 @@ export async function POST(request: Request) {
       }
 
       if (isMatch) {
-        // Automatically upgrade legacy plaintext passwords to bcrypt hash in Redis & Airtable
-        if (!BC_PREFIX.test(cachedUser.passwordHash)) {
-          try {
-            const hash = await bcrypt.hash(password, 10);
-            cachedUser.passwordHash = hash;
-            await updateRecord(cachedUser.table, cachedUser.id, {
-              [cachedUser.passwordField]: hash,
-            });
-            await setInRedis(cacheKey, cachedUser, 86400);
-          } catch (e) {
-            console.error("[Redis Auth] Password migration error:", e);
-          }
-        }
+        const device = await checkMemberDevice(cachedUser.role, cachedUser.id, body?.deviceProof);
+        if (device.response) return device.response;
 
         const sessionPayload: SessionPayload = {
           memberId: cachedUser.memberId,
@@ -298,6 +284,7 @@ export async function POST(request: Request) {
           name: cachedUser.name,
           recordId: cachedUser.id,
           role: cachedUser.role,
+          deviceKeyHash: device.fingerprint,
           altRole: cachedUser.altRole,
           altRecordId: cachedUser.altRecordId,
           altMemberId: cachedUser.altMemberId,
@@ -351,7 +338,7 @@ export async function POST(request: Request) {
       const c = CANDIDATES[i];
       const found = foundByCandidate[i];
       if (!found) continue;
-      const valid = await verifyAndMigrate(c.table, found, c.passwordField, password);
+      const valid = await verifyStoredPassword(found, c.passwordField, password);
       if (!valid) continue;
       role = c.role;
       record = found;
@@ -362,6 +349,9 @@ export async function POST(request: Request) {
     if (!role || !record || !matchedCandidate) {
       return genericError();
     }
+
+    const device = await checkMemberDevice(role, record.id, body?.deviceProof);
+    if (device.response) return device.response;
 
     let name = "";
     let idValue = "";
@@ -470,6 +460,7 @@ export async function POST(request: Request) {
       name,
       recordId: record.id,
       role,
+      deviceKeyHash: device.fingerprint,
       altRole,
       altRecordId,
       altMemberId,

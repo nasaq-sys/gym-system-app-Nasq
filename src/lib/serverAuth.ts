@@ -2,6 +2,7 @@ import { jwtVerify } from "jose";
 import { cookies, headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import type { SessionRole } from "@/lib/auth";
+import { isCurrentMemberDevice } from "@/lib/memberDevice";
 
 // Shared secret key for cryptographic signature verification
 const JWT_SECRET = new TextEncoder().encode(
@@ -26,7 +27,7 @@ export interface AuthUser {
 /**
  * Extracts and cryptographically verifies the JWT token from incoming API requests.
  * Checks the `Authorization: Bearer <token>` header first, then falls back to HttpOnly cookies.
- * 
+ *
  * Returns the decoded and validated `AuthUser` payload if the signature is valid and not expired.
  * Returns `null` if the token is missing, expired, malformed, or forged.
  */
@@ -101,6 +102,7 @@ export async function verifyApiRequest(
       name: (payload.name as string) || "",
       recordId: (payload.recordId as string) || (payload.id as string) || "",
       role: (payload.role as SessionRole) || "member",
+      deviceKeyHash: payload.deviceKeyHash as string | undefined,
       altRole: payload.altRole as SessionRole | undefined,
       altRecordId: payload.altRecordId as string | undefined,
       altMemberId: payload.altMemberId as string | undefined,
@@ -108,6 +110,8 @@ export async function verifyApiRequest(
       ...payload,
     };
 
+    if (user.role === "member" &&
+        !(await isCurrentMemberDevice(user.recordId, user.deviceKeyHash))) return null;
     return user;
   } catch {
     // Verification failed (e.g. signature mismatch, expired token, malformed token)

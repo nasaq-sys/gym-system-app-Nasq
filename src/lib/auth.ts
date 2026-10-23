@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { isCurrentMemberDevice } from "@/lib/memberDevice";
 
 // REMINDER: Add JWT_SECRET=your_super_secret_string_here to your .env.local file.
 const JWT_SECRET = new TextEncoder().encode(
@@ -18,6 +19,7 @@ export interface SessionPayload {
   name: string;
   recordId: string;
   role: SessionRole;
+  deviceKeyHash?: string;
   altRole?: SessionRole;
   altRecordId?: string;
   altMemberId?: string;
@@ -48,6 +50,8 @@ export async function getSession(): Promise<SessionPayload | null> {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     const session = payload as unknown as SessionPayload;
     if (!session.role) session.role = "member";
+    if (session.role === "member" &&
+        !(await isCurrentMemberDevice(session.recordId, session.deviceKeyHash))) return null;
     return session;
   } catch {
     return null;

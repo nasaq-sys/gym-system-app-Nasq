@@ -32,6 +32,8 @@ import { useWorkoutTimer } from "@/lib/WorkoutTimerProvider";
 import { useGymWhatsApp } from "@/hooks/useGymWhatsApp";
 import { WhatsAppIcon } from "@/components/shared/SocialIcons";
 import { clientFetch, getClientCachedData } from "@/lib/clientCache";
+import { Skeleton } from "@/components/ui/skeleton";
+import MemberQrPass from "@/components/shared/MemberQrPass";
 
 
 interface ProfileItem {
@@ -107,6 +109,7 @@ export default function ProfilePage() {
   const { isLinked: isWaLinked, openWhatsApp, displayPhone: waDisplayPhone } = useGymWhatsApp();
   const [member, setMember] = useState<MemberData | null>(() => getClientCachedData<MemberData>("/api/members"));
   const [loading, setLoading] = useState(() => !getClientCachedData("/api/members"));
+  const [loadError, setLoadError] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [renewModalOpen, setRenewModalOpen] = useState(false);
 
@@ -122,13 +125,15 @@ export default function ProfilePage() {
   };
 
 
-  const fetchProfile = useCallback(() => {
-    clientFetch<MemberData>("/api/members", undefined, { ttlMs: 60000 })
+  const fetchProfile = useCallback((forceRefresh = false) => {
+    if (forceRefresh) setLoading(true);
+    clientFetch<MemberData>("/api/members", undefined, { ttlMs: 60000, forceRefresh })
       .then((res) => {
         const data = (res as any)?.data ?? res;
-        if (data) setMember(data);
+        setMember(data || null);
+        setLoadError(false);
       })
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -162,9 +167,26 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin" />
+      <div className="mx-auto max-w-4xl space-y-5 py-6">
+        <Skeleton className="h-64 w-full rounded-3xl" />
+        <Skeleton className="h-80 w-full rounded-2xl" />
       </div>
+    );
+  }
+
+  if (!member) {
+    return (
+      <Card className="mx-auto max-w-4xl">
+        <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+          <AlertCircle className="size-8 text-foreground/60" />
+          <p className="text-sm text-foreground/70">
+            {t(loadError ? "profile.qr.loadError" : "profile.qr.noProfile")}
+          </p>
+          <Button onClick={() => fetchProfile(true)} className="min-h-11 px-5">
+            {t("profile.qr.retry")}
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -309,6 +331,17 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {loadError && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-3">
+          <p className="text-sm text-foreground/70">{t("profile.qr.loadError")}</p>
+          <Button onClick={() => fetchProfile(true)} className="min-h-11 px-4">
+            {t("profile.qr.retry")}
+          </Button>
+        </div>
+      )}
+
+      {member.recordId && <MemberQrPass />}
 
       {/* ── 2. TWO-COLUMN DETAILS GRID (Membership First, then Health Stats) ── */}
       <div className="grid md:grid-cols-2 gap-5">

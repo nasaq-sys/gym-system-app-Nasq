@@ -7,6 +7,7 @@ import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { FacebookIcon, InstagramIcon } from "@/components/shared/SocialIcons";
 import { useI18n } from "@/hooks/useI18n";
 import BrandLogo from "@/components/shared/BrandLogo";
+import { createDeviceProof } from "@/lib/clientMemberDevice";
 
 function LoginForm() {
   const router = useRouter();
@@ -52,6 +53,7 @@ function LoginForm() {
     setLoading(true);
 
     try {
+      const deviceProof = await createDeviceProof().catch(() => null);
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -60,14 +62,21 @@ function LoginForm() {
           email: identifier.trim(),
           identifier: identifier.trim(),
           password,
+          deviceProof,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
+        const deviceErrors: Record<string, string> = {
+          device_locked: "auth.deviceLocked",
+          device_invalid: "auth.deviceInvalid",
+          device_unavailable: "auth.deviceUnavailable",
+        };
         setError(
-          data?.error === "invalid_credentials"
+          deviceErrors[data?.error] ? t(deviceErrors[data.error])
+            : data?.error === "invalid_credentials"
             ? t("auth.invalidCredentials")
             : data?.message || t("auth.loginError")
         );

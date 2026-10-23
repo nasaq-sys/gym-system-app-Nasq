@@ -33,6 +33,7 @@ interface TokenPayload {
   email?: string;
   role?: string;
   recordId?: string;
+  deviceKeyHash?: string;
   exp?: number;
 }
 
@@ -342,7 +343,9 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
   // ── Extract User Session from JWT in Cookies ──────────────────────────
   const token = request.cookies.get("token")?.value || request.cookies.get("gojim_session")?.value;
-  const session = extractSessionFromToken(token);
+  const decodedSession = extractSessionFromToken(token);
+  const session = decodedSession?.role === "member" && !decodedSession.deviceKeyHash
+    ? null : decodedSession;
   const userEmail = session?.email || "Guest";
   const userRole = session?.role || "guest";
 
@@ -448,6 +451,10 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   }
 
   // ── 5. Role-Based Access Control (RBAC Guards) ───────────────────
+  if (pathname.startsWith("/api/admin/") &&
+      (!session || userRole !== "admin")) {
+    return withLog(NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 }));
+  }
   // Trainer portal & Trainer API
   if (pathname.startsWith("/trainer") || pathname.startsWith("/api/trainer")) {
     if (!session || userRole !== "trainer") {
@@ -495,7 +502,9 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   }
 
   // ── 7. Login route redirection (if already authenticated) ───────────
-  if (pathname === "/login" && session) {
+  // Let the member login page perform its authoritative Redis device check.
+  // A reset device may still hold a signed, unexpired cookie.
+  if (pathname === "/login" && session && userRole !== "member") {
     const targetUrl = userRole === "trainer" ? "/trainer" : "/home";
     return withLog(NextResponse.redirect(new URL(targetUrl, request.url)));
   }
